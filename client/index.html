@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Menu Editor</title>
+  <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+<div id="loginForm" style="display: none;">
+  <input type="text" id="login" placeholder="Login">
+  <input type="password" id="password" placeholder="Password">
+  <button onclick="login()">Login/Register</button>
+</div>
+
+<div id="restaurantPage" style="display: none;">
+  <h1 id="restaurantName"></h1>
+  <img id="qrCode" src="" onclick="openQRCode()">
+  <button onclick="logout()">Logout</button>
+  <table id="menuTable">
+    <tr>
+      <th>Dish</th>
+      <th>Price</th>
+    </tr>
+  </table>
+  <button onclick="addDish()">Add dish</button>
+  <button onclick="updateMenu()">Update menu</button>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
