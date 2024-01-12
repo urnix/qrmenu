@@ -1,0 +1,16 @@
+# OS
+.DS_Store
+
+# IDE
+.idea/
+
+# Libs
+api/node_modules/
+
+# Settings
+api/settings.json
+
+# Artifacts
+api/credentials.txt
+api/s/
+client/s/
