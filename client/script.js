@@ -1,5 +1,7 @@
 const API = 'https://api.m.artme.dev';
 const DOMAIN = 'https://m.artme.dev';
+// const API = 'http://localhost:3001';
+// const DOMAIN = '/Users/fen1x/dev/my/menu';
 
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -58,7 +60,7 @@ async function loadMenuData() {
         const response = await fetch(`${API}/?token=${encodeURIComponent(token)}`);
         if (response.ok) {
             const data = await response.json();
-            document.getElementById('restaurantName').innerHTML = `Menu of <a href="${DOMAIN}/s/${data.login}">${data.login}</a>`;
+            document.getElementById('restaurantName').innerHTML = `Menu of <a href="${DOMAIN}/s/${data.login}/index.html" target="_blank">${data.login}</a>`;
             document.getElementById('qrCode').src = `${DOMAIN}/s/${data.login}/qr.png`;
             populateMenuTable(data.data);
         } else {

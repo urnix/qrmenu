@@ -25,11 +25,153 @@ const credentialsPath = './credentials.txt';
  */
 const settings = JSON.parse(fs.readFileSync('./settings.json', 'utf8'));
 const usersBaseDir = path.join(__dirname, 's');
+// const usersBaseDir = '/Users/fen1x/dev/my/menu/s';
 
 const isValidData = (data) => /^[a-zA-Z0-9-_]+$/.test(data);
 
+// function saveMenuPage(login, menu) {
+//     fs.writeFileSync(`${usersBaseDir}/${login}/index.html`, `<html lang="ru"><body><h2>Menu of ${login}:</h2>${menu}</body></html>`);
+// }
+
+
 function saveMenuPage(login, menu) {
-    fs.writeFileSync(`${usersBaseDir}/${login}/index.html`, `<html lang="ru"><body><h2>Menu of ${login}:</h2>${menu}</body></html>`);
+    const htmlContent = `
+    <html lang="ru">
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+     body, h1, button, p {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+}
+
+header {
+  background-color: #000;
+  color: #fff;
+  text-align: center;
+  padding: 20px;
+}
+
+nav {
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0;
+  background: #333;
+}
+
+nav button {
+  background: none;
+  border: none
+  border: none;
+  color: #fff;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+nav button:focus, nav button:hover {
+  background: #555;
+}
+
+main {
+  padding: 20px;
+}
+
+#menu {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+#menu .dish-card {
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  // overflow: hidden;
+}
+
+.dish-card img {
+  // width: 100%;
+  height: 150px;
+  display: block;
+}
+
+.dish-card .content {
+  padding: 15px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.dish-card h3 {
+  margin: 0;
+  color: #333;
+}
+
+.dish-card p {
+  margin: 10px 0;
+  color: #666;
+}
+
+footer {
+  text-align: center;
+  padding: 20px;
+  background: #f2f2f2;
+}
+
+footer button {
+  background: #4CAF50;
+  border: none;
+  padding: 10px 15px;
+  color: white;
+  font-size: 18px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+footer p {
+  margin-top: 10px;
+  color: #333;
+}
+
+</style>
+</head>
+<body>
+  <header>
+    <h1>${login}</h1>
+  </header>
+  <main>
+    <section id="menu">
+      ${menu}
+    </section>
+  </main>
+</body>
+</html>
+`;
+    fs.writeFileSync(`${usersBaseDir}/${login}/index.html`, htmlContent);
+}
+
+function createDishCard(dish) {
+    return `
+    <div class="dish-card">
+      <img src="${dish.imgUrl || '../dish_placeholder.png'}" alt="${dish.name}">
+      <div class="content">
+        <h3>${dish.name}</h3>
+        <p>${dish.price} ₺</p>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * @typedef {Object} Dish
+ * @property {string} name
+ * @property {string} price
+ *
+ * @param {Dish[]} data
+ */
+function generateMenuTable(data) {
+    return data.map(createDishCard).join('');
 }
 
 function prolongToken(decoded) {
@@ -84,21 +226,15 @@ app.get('/', (req, res) => {
     }
 });
 
-/**
- * @typedef {Object} Dish
- * @property {string} name
- * @property {string} price
- *
- * @param {Dish[]} data
- */
-function generateMenuTable(data) {
-    return data.map(d => `<tr><td>${(d.name || '?')}</td><td>${(d.price || '?')}</td></tr>`).join('');
-}
-
 app.put('/', (req, res) => {
+    let decoded;
     try {
         const {token} = req.query;
-        const decoded = jwt.verify(token, settings.KEY);
+        decoded = jwt.verify(token, settings.KEY);
+    } catch (error) {
+        return res.status(401).send('Session expired');
+    }
+    try {
         const data = req.body;
 
         fs.writeFileSync(`${usersBaseDir}/${decoded.login}/data.json`, JSON.stringify(data));
@@ -107,7 +243,8 @@ app.put('/', (req, res) => {
 
         return res.status(200).json({token: prolongToken(decoded)});
     } catch (error) {
-        return res.status(401).send('Session expired');
+        console.error(error);
+        return res.status(500).send('Server error');
     }
 });
 
@@ -118,9 +255,7 @@ function init() {
         fs.writeFileSync(credentialsPath, '');
     }
     if (!fs.existsSync('./settings.json')) {
-        console.error('`settings.json` not found');
         process.exit(1);
-
     }
 }
 
