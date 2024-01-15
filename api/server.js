@@ -157,7 +157,8 @@ function createDishCard(dish) {
       <img src="${dish.imgUrl || '../dish_placeholder.png'}" alt="${dish.name}">
       <div class="content">
         <h3>${dish.name}</h3>
-        <p>${dish.price} ₺</p>
+        <p>${dish.description}</p>
+        <p>${dish.price} TL</p>
       </div>
     </div>
   `;

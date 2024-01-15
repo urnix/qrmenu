@@ -31,9 +31,9 @@ async function login() {
         const response = await fetch(`${API}/`, {
             method: 'POST', headers: {
                 'Content-Type': 'application/json',
-            }, body: JSON.stringify({login, password})
+            },
+            body: JSON.stringify({login, password})
         });
-
         if (response.ok) {
             const data = await response.json();
             localStorage.setItem('token', data.token);
@@ -78,8 +78,10 @@ function populateMenuTable(dishes) {
         const row = table.insertRow();
         const cell1 = row.insertCell(0);
         const cell2 = row.insertCell(1);
+        const cell3 = row.insertCell(2);
         cell1.textContent = dish.name;
-        cell2.textContent = dish.price;
+        cell2.textContent = dish.description;
+        cell3.textContent = dish.price;
     });
 }
 
@@ -88,8 +90,10 @@ function addDish() {
     const row = table.insertRow();
     const cell1 = row.insertCell(0);
     const cell2 = row.insertCell(1);
-    cell1.innerHTML = '<input type="text" placeholder="Dish name">';
-    cell2.innerHTML = '<input type="text" placeholder="Price">';
+    const cell3 = row.insertCell(2);
+    cell1.innerHTML = '<input type="text" placeholder="Name">';
+    cell2.innerHTML = '<input type="text" placeholder="Description">';
+    cell3.innerHTML = '<input type="text" placeholder="Price">';
 }
 
 async function updateMenu() {
@@ -99,8 +103,9 @@ async function updateMenu() {
     for (let i = 1; i < table.rows.length; i++) {
         let row = table.rows[i];
         let name = row.cells[0].querySelector('input')?.value || row.cells[0].textContent;
-        let price = row.cells[1].querySelector('input')?.value || row.cells[1].textContent;
-        dishes.push({name, price});
+        let description = row.cells[1].querySelector('input')?.value || row.cells[1].textContent;
+        let price = row.cells[2].querySelector('input')?.value || row.cells[2].textContent;
+        dishes.push({name, price, description});
     }
 
     try {
@@ -109,6 +114,7 @@ async function updateMenu() {
                 'Content-Type': 'application/json',
             }, body: JSON.stringify(dishes)
         });
+
 
         if (response.ok) {
             alert('Menu updated successfully');
