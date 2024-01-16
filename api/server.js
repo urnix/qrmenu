@@ -1,3 +1,5 @@
+// TODO: fs sync -> async
+
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
@@ -10,9 +12,10 @@ const credentialsPath = './credentials.txt';
  * @property {string} KEY
  * @property {string} DOMAIN
  */
-const settings = JSON.parse(fs.readFileSync('./settings.json', 'utf8'));
-// const usersBaseDir = '/Users/fen1x/dev/my/menu/s';
-const usersBaseDir = path.join(__dirname, 's');
+const isLocal = __dirname.includes('Users/');
+const settingsPath = `./settings.${isLocal ? 'local' : 'prod'}.json`;
+const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+const sitesDir = path.join(__dirname, (isLocal ? '../' : '') + 's');
 
 const app = express();
 app.use(express.json());
@@ -23,16 +26,11 @@ app.use((req, res, next) => {
     next();
 });
 app.use('/:login', (req, res, next) => {
-    const userDir = path.join(usersBaseDir, req.params.login);
+    const userDir = path.join(sitesDir, req.params.login);
     express.static(userDir)(req, res, next);
 });
 
 const isValidData = (data) => /^[a-zA-Z0-9-_]+$/.test(data);
-
-// function saveMenuPage(login, menu) {
-//     fs.writeFileSync(`${usersBaseDir}/${login}/index.html`, `<html lang="ru"><body><h2>Menu of ${login}:</h2>${menu}</body></html>`);
-// }
-
 
 function saveMenuPage(login, menu) {
     const htmlContent = `
@@ -148,7 +146,7 @@ footer p {
 </body>
 </html>
 `;
-    fs.writeFileSync(`${usersBaseDir}/${login}/index.html`, htmlContent);
+    fs.writeFileSync(`${sitesDir}/${login}/index.html`, htmlContent);
 }
 
 function createDishCard(dish) {
@@ -181,7 +179,7 @@ function prolongToken(decoded) {
 }
 
 function generateQRCode(login) {
-    QRCode.toFile(`${usersBaseDir}/${login}/qr.png`, settings.DOMAIN + `/s/` + login, {
+    QRCode.toFile(`${sitesDir}/${login}/qr.png`, settings.DOMAIN + `/s/` + login, {
         color: {
             dark: '#000',
             light: '#FFF'
@@ -209,15 +207,15 @@ app.post('/', (req, res) => {
     }
 
     fs.appendFileSync(credentialsPath, `${login}\t${password}\n`);
-    fs.mkdirSync(`${usersBaseDir}/${login}`);
-    fs.mkdirSync(`${usersBaseDir}/${login}/imgs`);
+    fs.mkdirSync(`${sitesDir}/${login}`);
+    fs.mkdirSync(`${sitesDir}/${login}/imgs`);
     const exampleData = new Array(100).fill(0).map((_, i) => ({
         name: 'Dish' + i,
         description: 'Description' + i,
         price: '10' + i,
         imgUrl: '../dish_placeholder.png?q=' + i
     }));
-    fs.writeFileSync(`${usersBaseDir}/${login}/data.json`, JSON.stringify(exampleData));
+    fs.writeFileSync(`${sitesDir}/${login}/data.json`, JSON.stringify(exampleData));
     saveMenuPage(login, '<p>There are no dishes yet</p>');
     generateQRCode(login);
 
@@ -228,7 +226,7 @@ app.get('/', (req, res) => {
     try {
         const {token} = req.query;
         const decoded = jwt.verify(token, settings.KEY);
-        const data = fs.readFileSync(`${usersBaseDir}/${decoded.login}/data.json`, 'utf8');
+        const data = fs.readFileSync(`${sitesDir}/${decoded.login}/data.json`, 'utf8');
         return res.status(200).json({token: prolongToken(decoded), login: decoded.login, data: JSON.parse(data)});
     } catch (error) {
         return res.status(401).send('Session expired');
@@ -246,7 +244,7 @@ app.put('/', (req, res) => {
     try {
         const data = req.body;
 
-        fs.writeFileSync(`${usersBaseDir}/${decoded.login}/data.json`, JSON.stringify(data));
+        fs.writeFileSync(`${sitesDir}/${decoded.login}/data.json`, JSON.stringify(data));
 
         saveMenuPage(decoded.login, `<table>${generateMenuTable(data)}</table>`);
 
@@ -263,7 +261,8 @@ function init() {
     if (!fs.existsSync(credentialsPath)) {
         fs.writeFileSync(credentialsPath, '');
     }
-    if (!fs.existsSync('./settings.json')) {
+    if (!fs.existsSync(settingsPath)) {
+        console.error(`Settings file ${settingsPath} not found`);
         process.exit(1);
     }
 }

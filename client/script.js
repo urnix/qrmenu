@@ -1,8 +1,6 @@
-const API = 'https://api.m.artme.dev';
-const DOMAIN = 'https://m.artme.dev';
-// const API = 'http://localhost:3001';
-// const DOMAIN = '/Users/fen1x/dev/my/menu';
-
+const isLocal =  window.location.href.includes('localhost') || window.location.href.includes('file:///');
+const API = isLocal ? 'http://localhost:3001' : 'https://api.m.artme.dev';
+const DOMAIN = isLocal ? 'file:///Users/fen1x/dev/my/menu' : 'https://m.artme.dev/s';
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (localStorage.getItem('token')) {
@@ -17,7 +15,6 @@ function showLoginForm() {
     document.getElementById('loginForm').style.display = 'block';
     document.getElementById('restaurantPage').style.display = 'none';
 }
-
 
 function showRestaurantPage() {
     document.getElementById('loginForm').style.display = 'none';
