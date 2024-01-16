@@ -81,36 +81,54 @@ main {
   grid-template-columns: 1fr;
   gap: 20px;
 }
-
 #menu .dish-card {
+  display: flex;
+  align-items: center;
   background-color: #fff;
   border-radius: 10px;
   box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-  // overflow: hidden;
+}
+
+.dish-card {
+  display: flex;
+  justify-content: space-between;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  margin-bottom: 20px; /* Add space between cards */
 }
 
 .dish-card img {
-  // width: 100%;
   height: 150px;
-  display: block;
+  width: auto; /* Adjust width automatically */
+  border-radius: 10px; /* Optional: if you want rounded corners on images */
+  margin-left: 15px; /* Add some space between the image and the border */
 }
 
 .dish-card .content {
   padding: 15px;
-  display: grid;
-  grid-template-rows: auto 1fr auto;
+  flex-grow: 1; /* Content takes up remaining space */
 }
 
-.dish-card h3 {
-  margin: 0;
+/* Additional styles for the content */
+.dish-card .content h3 {
+  margin: 0 0 10px 0; /* Add some margin below the title */
   color: #333;
 }
 
-.dish-card p {
-  margin: 10px 0;
+.dish-card .content p {
+  margin: 0; /* Remove margin from paragraphs */
   color: #666;
 }
 
+/* Ensure the image floats right */
+.dish-card .content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Update footer styles if needed */
 footer {
   text-align: center;
   padding: 20px;
@@ -131,6 +149,7 @@ footer p {
   margin-top: 10px;
   color: #333;
 }
+
 
 </style>
 </head>
