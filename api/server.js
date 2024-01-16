@@ -4,6 +4,16 @@ const fs = require('fs');
 const QRCode = require('qrcode');
 const path = require('path');
 
+const credentialsPath = './credentials.txt';
+/**
+ * @typedef {Object} Settings
+ * @property {string} KEY
+ * @property {string} DOMAIN
+ */
+const settings = JSON.parse(fs.readFileSync('./settings.json', 'utf8'));
+// const usersBaseDir = '/Users/fen1x/dev/my/menu/s';
+const usersBaseDir = path.join(__dirname, 's');
+
 const app = express();
 app.use(express.json());
 app.use((req, res, next) => {
@@ -16,16 +26,6 @@ app.use('/:login', (req, res, next) => {
     const userDir = path.join(usersBaseDir, req.params.login);
     express.static(userDir)(req, res, next);
 });
-
-const credentialsPath = './credentials.txt';
-/**
- * @typedef {Object} Settings
- * @property {string} KEY
- * @property {string} DOMAIN
- */
-const settings = JSON.parse(fs.readFileSync('./settings.json', 'utf8'));
-const usersBaseDir = path.join(__dirname, 's');
-// const usersBaseDir = '/Users/fen1x/dev/my/menu/s';
 
 const isValidData = (data) => /^[a-zA-Z0-9-_]+$/.test(data);
 
@@ -154,7 +154,7 @@ footer p {
 function createDishCard(dish) {
     return `
     <div class="dish-card">
-      <img src="${dish.imgUrl || '../dish_placeholder.png'}" alt="${dish.name}">
+      <img src="${dish.imgUrl /*|| '../dish_placeholder.png'*/}" alt="${dish.name}">
       <div class="content">
         <h3>${dish.name}</h3>
         <p>${dish.description}</p>
@@ -168,6 +168,7 @@ function createDishCard(dish) {
  * @typedef {Object} Dish
  * @property {string} name
  * @property {string} price
+ * @property {string} imgUrl
  *
  * @param {Dish[]} data
  */
@@ -207,9 +208,16 @@ app.post('/', (req, res) => {
         return res.status(200).json({token});
     }
 
+    fs.appendFileSync(credentialsPath, `${login}\t${password}\n`);
     fs.mkdirSync(`${usersBaseDir}/${login}`);
     fs.mkdirSync(`${usersBaseDir}/${login}/imgs`);
-    fs.writeFileSync(`${usersBaseDir}/${login}/data.json`, '[]');
+    const exampleData = new Array(100).fill(0).map((_, i) => ({
+        name: 'Dish' + i,
+        description: 'Description' + i,
+        price: '10' + i,
+        imgUrl: '../dish_placeholder.png?q=' + i
+    }));
+    fs.writeFileSync(`${usersBaseDir}/${login}/data.json`, JSON.stringify(exampleData));
     saveMenuPage(login, '<p>There are no dishes yet</p>');
     generateQRCode(login);
 

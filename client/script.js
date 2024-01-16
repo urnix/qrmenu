@@ -79,9 +79,11 @@ function populateMenuTable(dishes) {
         const cell1 = row.insertCell(0);
         const cell2 = row.insertCell(1);
         const cell3 = row.insertCell(2);
+        const cell4 = row.insertCell(3);
         cell1.textContent = dish.name;
         cell2.textContent = dish.description;
         cell3.textContent = dish.price;
+        cell4.textContent = dish.imgUrl;
     });
 }
 
@@ -91,9 +93,11 @@ function addDish() {
     const cell1 = row.insertCell(0);
     const cell2 = row.insertCell(1);
     const cell3 = row.insertCell(2);
+    const cell4 = row.insertCell(3);
     cell1.innerHTML = '<input type="text" placeholder="Name">';
     cell2.innerHTML = '<input type="text" placeholder="Description">';
     cell3.innerHTML = '<input type="text" placeholder="Price">';
+    cell4.innerHTML = '<input type="text" placeholder="imgUrl">';
 }
 
 async function updateMenu() {
@@ -105,7 +109,8 @@ async function updateMenu() {
         let name = row.cells[0].querySelector('input')?.value || row.cells[0].textContent;
         let description = row.cells[1].querySelector('input')?.value || row.cells[1].textContent;
         let price = row.cells[2].querySelector('input')?.value || row.cells[2].textContent;
-        dishes.push({name, price, description});
+        let imgUrl = row.cells[3].querySelector('input')?.value || row.cells[3].textContent;
+        dishes.push({name, price, description, imgUrl});
     }
 
     try {
