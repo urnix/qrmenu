@@ -10,7 +10,7 @@ export let options = {
 };
 
 export default function () {
-    let response = http.get('https://m.artme.dev/sites/a/index.html');
+    let response = http.get('https://m.artme.dev/sites/3/index.html');
 
     check(response, {
         'is status 200': (r) => r.status === 200,

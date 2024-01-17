@@ -72,8 +72,8 @@ async function loadMenuData() {
 
 function renderImgCell(index, imgUrl) {
     return `<input id="fileInput${index}" class="hidden" type="file" 
-            onchange="uploadImage(this, '${index}')"><img class="dishImage" src="${imgUrl}" 
-            onclick="document.getElementById('fileInput${index}').click()">`;
+            onchange="uploadImage(this, '${index}')"><img class="dishImage" src="${imgUrl || `${DOMAIN}/imgs/dish_placeholder.png`}"
+            alt="Image" onclick="document.getElementById('fileInput${index}').click()">`;
 }
 
 function populateMenuTable(dishes) {
@@ -130,9 +130,11 @@ async function updateMenu() {
         let name = row.cells[0].querySelector('input')?.value || row.cells[0].textContent;
         let description = row.cells[1].querySelector('input')?.value || row.cells[1].textContent;
         let price = row.cells[2].querySelector('input')?.value || row.cells[2].textContent;
-        let imgUrl = row.cells[3].querySelector('img')?.src || '';
+        let src = row.cells[3].querySelector('img')?.src;
+        let imgUrl = src || '';
         dishes.push({name, price, description, imgUrl});
     }
+        console.log(`dishes: ${JSON.stringify(dishes)}`);
 
     try {
         const response = await fetch(`${API}/?token=${encodeURIComponent(localStorage.getItem('token'))}`, {

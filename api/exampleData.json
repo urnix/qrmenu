@@ -1,0 +1,62 @@
+[
+  {
+    "name": "Caviar",
+    "description": "Description",
+    "price": "100",
+    "imgUrl": "${domain}/imgs/examples/set/caviar.jpeg"
+  },
+  {
+    "name": "Borsch",
+    "description": "Description",
+    "price": "100",
+    "imgUrl": "${domain}/imgs/examples/set/borsch.jpg"
+  },
+  {
+    "name": "Cezar",
+    "description": "Description",
+    "price": "100",
+    "imgUrl": "${domain}/imgs/examples/set/cezar.jpg"
+  },
+  {
+    "name": "Kebab",
+    "description": "Description",
+    "price": "100",
+    "imgUrl": "${domain}/imgs/examples/set/kebab.jpg"
+  },
+  {
+    "name": "Oyster",
+    "description": "Description",
+    "price": "100",
+    "imgUrl": "${domain}/imgs/examples/set/oysters.jpg"
+  },
+  {
+    "name": "Tiramisu",
+    "description": "Description",
+    "price": "100",
+    "imgUrl": "${domain}/imgs/examples/set/tiramisu.jpeg"
+  },
+  {
+    "name": "Pizza",
+    "description": "Description",
+    "price": "100",
+    "imgUrl": "${domain}/imgs/examples/set/pizza.jpeg"
+  },
+  {
+    "name": "Ramen",
+    "description": "Description",
+    "price": "100",
+    "imgUrl": "${domain}/imgs/examples/set/ramen.webp"
+  },
+  {
+    "name": "Hamburger",
+    "description": "Description",
+    "price": "100",
+    "imgUrl": "${domain}/imgs/examples/set/hamburger.jpeg"
+  },
+  {
+    "name": "Cappuccino",
+    "description": "Description",
+    "price": "100",
+    "imgUrl": "${domain}/imgs/examples/set/cappuccino.jpeg"
+  }
+]

@@ -40,11 +40,9 @@ function recCopy(s, s2) {
             fs.mkdirSync(s2);
         }
         fs.readdirSync(s).forEach((file) => {
-            console.log(`file: ${JSON.stringify(file)}`);
             recCopy(path.join(s, file), path.join(s2, file));
         });
     } else {
-        console.log(`file!: ${JSON.stringify(s)}`);
         fs.copyFileSync(s, s2);
         if (!fs.existsSync(s2)) {
             console.error(`Failed to copy file ${s} to ${s2}`);
@@ -56,7 +54,7 @@ function recCopy(s, s2) {
 function createDishCard(dish) {
     return `
     <div class="dish-card">
-      <img src="${dish.imgUrl}" alt="${dish.name}">
+      <img src="${dish.imgUrl || `${settings.DOMAIN}/imgs/dish_placeholder.png`}" alt="${dish.name}">
       <div class="content">
         <h3>${dish.name}</h3>
         <p>${dish.description}</p>
@@ -64,21 +62,6 @@ function createDishCard(dish) {
       </div>
     </div>
   `;
-}
-
-/**
- * @typedef {Object} Dish
- * @property {string} name
- * @property {string} price
- * @property {string} imgUrl
- *
- * @param {Dish[]} data
- */
-function generateMenuTable(data) {
-    if (!data.length) {
-        return '<p>There are no dishes yet</p>';
-    }
-    return data.map(createDishCard).join('');
 }
 
 function prolongToken(decoded) {
@@ -120,7 +103,6 @@ app.post('/', async (req, res) => {
         }
 
         fs.appendFileSync(credentialsPath, `${login}\t${password}\n`);
-        // check that user crdeentials are saved
         const credentials2 = fs.readFileSync(credentialsPath, 'utf8').split('\n');
         if (!credentials2.find(line => line.startsWith(login + '\t'))) {
             console.error(`Failed to save credentials for ${login}`);
@@ -141,13 +123,16 @@ app.post('/', async (req, res) => {
             console.error(`Failed to create QR code for ${login}`);
             return res.status(500).send('Server error');
         }
-        // const initData = [];
-        const initData = new Array(10).fill(0).map((_, i) => ({
-            name: 'Dish' + i,
-            description: 'Description' + i,
-            price: '10' + i,
-            imgUrl: `${settings.DOMAIN}/imgs/dish_placeholder.png?q=${i}`
-        }));
+        // const initData = new Array(10).fill(0).map((_, i) => ({name: 'Dish' + i, description: 'Description' + i, price: '10' + i, imgUrl: `${settings.DOMAIN}/imgs/dish_placeholder.png?q=${i}`}));
+        let initData;
+        if (fs.existsSync('./exampleData.json')) {
+            initData = JSON.parse(fs.readFileSync('./exampleData.json', 'utf8')).map((dish, i) => ({
+                ...dish,
+                imgUrl: dish.imgUrl.replace('${domain}', settings.DOMAIN)
+            }));
+        } else {
+            initData = [];
+        }
         saveDataAndPage(login, initData);
         return res.status(200).json({token});
     } catch (error) {
@@ -177,8 +162,13 @@ app.get('/', (req, res) => {
 });
 
 function saveDataAndPage(login, data) {
+    console.log(`data: ${JSON.stringify(data)}`);
     fs.writeFileSync(`${sitesDir}/${login}/data.json`, JSON.stringify(data));
-    const menu = generateMenuTable(data);
+    let menu;
+    if (!data.length) {
+        menu = '<p>There are no dishes yet</p>';
+    }
+    menu = data.map(createDishCard).join('');
     let htmlContent = fs.readFileSync('./templates/index.html', 'utf8');
     let cssContent = fs.readFileSync('./templates/style.css', 'utf8');
     htmlContent = htmlContent
