@@ -182,6 +182,7 @@ function saveDataAndPage(login, data) {
     let htmlContent = fs.readFileSync('./templates/index.html', 'utf8');
     let cssContent = fs.readFileSync('./templates/style.css', 'utf8');
     htmlContent = htmlContent
+        .replace('${domain}', settings.DOMAIN)
         .replace('${styles}', cssContent)
         .replace('${login}', login)
         .replace('${menu}', menu);
