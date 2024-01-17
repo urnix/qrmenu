@@ -16,7 +16,7 @@ const credentialsPath = './credentials.txt';
 const isLocal = __dirname.includes('Users/');
 const settingsPath = `./settings.${isLocal ? 'local' : 'prod'}.json`;
 const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
-const sitesDir = path.join(__dirname, (isLocal ? '../' : '') + 's');
+const sitesDir = path.join(__dirname, 'sites');
 
 const app = express();
 app.use(express.json());
@@ -33,20 +33,30 @@ app.use('/:login', (req, res, next) => {
 
 const isValidData = (data) => /^[a-zA-Z0-9-_]+$/.test(data);
 
-function saveMenuPage(login, menu) {
-    let htmlContent = fs.readFileSync('./templates/index.html', 'utf8');
-    let cssContent = fs.readFileSync('./templates/style.css', 'utf8');
-    htmlContent = htmlContent
-        .replace('${styles}', cssContent)
-        .replace('${login}', login)
-        .replace('${menu}', menu);
-    fs.writeFileSync(`${sitesDir}/${login}/index.html`, htmlContent);
+function recCopy(s, s2) {
+    const stat = fs.statSync(s);
+    if (stat.isDirectory()) {
+        if (!fs.existsSync(s2)) {
+            fs.mkdirSync(s2);
+        }
+        fs.readdirSync(s).forEach((file) => {
+            console.log(`file: ${JSON.stringify(file)}`);
+            recCopy(path.join(s, file), path.join(s2, file));
+        });
+    } else {
+        console.log(`file!: ${JSON.stringify(s)}`);
+        fs.copyFileSync(s, s2);
+        if (!fs.existsSync(s2)) {
+            console.error(`Failed to copy file ${s} to ${s2}`);
+            throw new Error(`Failed to copy file ${s} to ${s2}`);
+        }
+    }
 }
 
 function createDishCard(dish) {
     return `
     <div class="dish-card">
-      <img src="${dish.imgUrl /*|| '../dish_placeholder.png'*/}" alt="${dish.name}">
+      <img src="${dish.imgUrl}" alt="${dish.name}">
       <div class="content">
         <h3>${dish.name}</h3>
         <p>${dish.description}</p>
@@ -65,6 +75,9 @@ function createDishCard(dish) {
  * @param {Dish[]} data
  */
 function generateMenuTable(data) {
+    if (!data.length) {
+        return '<p>There are no dishes yet</p>';
+    }
     return data.map(createDishCard).join('');
 }
 
@@ -72,18 +85,23 @@ function prolongToken(decoded) {
     return jwt.sign({...decoded, exp: Math.floor(Date.now() / 1000) + (60 * 60)}, settings.KEY);
 }
 
-function generateQRCode(login) {
-    QRCode.toFile(`${sitesDir}/${login}/qr.png`, settings.DOMAIN + `/s/` + login, {
-        color: {
-            dark: '#000',
-            light: '#FFF'
-        }
-    }, (err) => {
-        if (err) throw err;
+async function generateQRCode(login) {
+    return new Promise((resolve, reject) => {
+        QRCode.toFile(`${sitesDir}/${login}/qr.png`, settings.DOMAIN + `/sites/` + login, {
+            color: {
+                dark: '#000',
+                light: '#FFF'
+            }
+        }, (err) => {
+            if (err) {
+                return reject(err);
+            }
+            resolve();
+        });
     });
 }
 
-app.post('/', (req, res) => {
+app.post('/', async (req, res) => {
     try {
         const {login, password} = req.body;
         if (!isValidData(login) || !isValidData(password)) {
@@ -102,24 +120,45 @@ app.post('/', (req, res) => {
         }
 
         fs.appendFileSync(credentialsPath, `${login}\t${password}\n`);
+        // check that user crdeentials are saved
+        const credentials2 = fs.readFileSync(credentialsPath, 'utf8').split('\n');
+        if (!credentials2.find(line => line.startsWith(login + '\t'))) {
+            console.error(`Failed to save credentials for ${login}`);
+            return res.status(500).send('Server error');
+        }
         fs.mkdirSync(`${sitesDir}/${login}`);
+        if (!fs.existsSync(`${sitesDir}/${login}`)) {
+            console.error(`Failed to create site directory for ${login}`);
+            return res.status(500).send('Server error');
+        }
         fs.mkdirSync(`${sitesDir}/${login}/imgs`);
-        const exampleData = new Array(10).fill(0).map((_, i) => ({
+        if (!fs.existsSync(`${sitesDir}/${login}/imgs`)) {
+            console.error(`Failed to create site directory for ${login}`);
+            return res.status(500).send('Server error');
+        }
+        await generateQRCode(login);
+        if (!fs.existsSync(`${sitesDir}/${login}/qr.png`)) {
+            console.error(`Failed to create QR code for ${login}`);
+            return res.status(500).send('Server error');
+        }
+        // const initData = [];
+        const initData = new Array(10).fill(0).map((_, i) => ({
             name: 'Dish' + i,
             description: 'Description' + i,
             price: '10' + i,
-            imgUrl: '../dish_placeholder.png?q=' + i
+            imgUrl: `${settings.DOMAIN}/imgs/dish_placeholder.png?q=${i}`
         }));
-        fs.writeFileSync(`${sitesDir}/${login}/data.json`, JSON.stringify(exampleData));
-        saveMenuPage(login, '<p>There are no dishes yet</p>');
-        generateQRCode(login);
-
+        saveDataAndPage(login, initData);
         return res.status(200).json({token});
     } catch (error) {
         console.error(error);
         return res.status(500).send('Server error');
     }
 });
+
+function loadData(login) {
+    return JSON.parse(fs.readFileSync(`${sitesDir}/${login}/data.json`, 'utf8'));
+}
 
 app.get('/', (req, res) => {
     let decoded;
@@ -129,13 +168,32 @@ app.get('/', (req, res) => {
         return res.status(401).send('Session expired');
     }
     try {
-        const data = fs.readFileSync(`${sitesDir}/${decoded.login}/data.json`, 'utf8');
-        return res.status(200).json({token: prolongToken(decoded), login: decoded.login, data: JSON.parse(data)});
+        const data = loadData(decoded.login);
+        return res.status(200).json({token: prolongToken(decoded), login: decoded.login, data});
     } catch (error) {
         console.error(error);
         return res.status(500).send('Server error');
     }
 });
+
+function saveDataAndPage(login, data) {
+    fs.writeFileSync(`${sitesDir}/${login}/data.json`, JSON.stringify(data));
+    const menu = generateMenuTable(data);
+    let htmlContent = fs.readFileSync('./templates/index.html', 'utf8');
+    let cssContent = fs.readFileSync('./templates/style.css', 'utf8');
+    htmlContent = htmlContent
+        .replace('${styles}', cssContent)
+        .replace('${login}', login)
+        .replace('${menu}', menu);
+    fs.writeFileSync(`${sitesDir}/${login}/index.html`, htmlContent);
+    if (!fs.existsSync(`${sitesDir}/${login}/index.html`)) {
+        console.error(`Failed to create page for ${login}`);
+        throw new Error('Failed to create page');
+    }
+    if (isLocal) {
+        recCopy(`sites/${login}`, `../client/sites/${login}`);
+    }
+}
 
 app.put('/', (req, res) => {
     let decoded;
@@ -146,12 +204,7 @@ app.put('/', (req, res) => {
         return res.status(401).send('Session expired');
     }
     try {
-        const data = req.body;
-
-        fs.writeFileSync(`${sitesDir}/${decoded.login}/data.json`, JSON.stringify(data));
-
-        saveMenuPage(decoded.login, generateMenuTable(data));
-
+        saveDataAndPage(decoded.login, req.body);
         return res.status(200).json({token: prolongToken(decoded)});
     } catch (error) {
         console.error(error);
@@ -172,8 +225,11 @@ const storage = multer.diskStorage({
 });
 const upload = multer({storage: storage});
 
-app.post('/upload/:login/:index', upload.single('image'), function (req, res, next) {
-    const imageUrl = `${req.protocol}://${req.get('host')}/${req.params.login}/imgs/${req.file.filename}`;
+app.post('/upload/:login/:index', upload.single('image'), function (req, res) {
+    const imageUrl = `${settings.DOMAIN}/sites/${req.params.login}/imgs/${req.file.filename}`;
+    const data = loadData(req.params.login);
+    data[req.params.index].imgUrl = imageUrl;
+    saveDataAndPage(req.params.login, data);
     res.json({imgUrl: imageUrl});
 });
 

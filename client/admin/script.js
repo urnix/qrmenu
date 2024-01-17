@@ -1,6 +1,6 @@
 const isLocal = window.location.href.includes('localhost') || window.location.href.includes('file:///');
 const API = isLocal ? 'http://localhost:3001' : 'https://api.m.artme.dev';
-const DOMAIN = isLocal ? 'file:///Users/fen1x/dev/my/menu' : 'https://m.artme.dev/s';
+const DOMAIN = isLocal ? 'file:///Users/fen1x/dev/my/menu/client' : 'https://m.artme.dev';
 
 let login_ = '';
 
@@ -57,8 +57,9 @@ async function loadMenuData() {
         const response = await fetch(`${API}/?token=${encodeURIComponent(token)}`);
         if (response.ok) {
             const data = await response.json();
-            document.getElementById('restaurantName').innerHTML = `Menu of <a href="${DOMAIN}/s/${data.login}/index.html" target="_blank">${data.login}</a>`;
-            document.getElementById('qrCode').src = `${DOMAIN}/s/${data.login}/qr.png`;
+            this.login_ = data.login;
+            document.getElementById('restaurantName').innerHTML = `Menu of <a href="${DOMAIN}/sites/${data.login}/index.html" target="_blank">${data.login}</a>`;
+            document.getElementById('qrCode').src = `${DOMAIN}/sites/${data.login}/qr.png`;
             populateMenuTable(data.data);
         } else {
             alert('Failed to load menu data');
@@ -109,10 +110,7 @@ async function uploadImage(input, index) {
     const formData = new FormData();
     formData.append('image', file);
     try {
-        const response = await fetch(`${API}/upload/${this.login_}/${index}`, {
-            method: 'POST',
-            body: formData
-        });
+        const response = await fetch(`${API}/upload/${this.login_}/${index}`, {method: 'POST', body: formData});
         if (response.ok) {
             const result = await response.json();
             document.getElementById('menuTableBody').rows[index].cells[3].innerHTML = renderImgCell(index, result.imgUrl);
@@ -123,6 +121,7 @@ async function uploadImage(input, index) {
         alert('Error uploading image');
     }
 }
+
 async function updateMenu() {
     const table = document.getElementById('menuTableBody');
     let dishes = [];

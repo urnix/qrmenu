@@ -12,7 +12,8 @@ api/settings.json
 
 # Artifacts
 api/credentials.txt
-api/s/
-client/s/
-s/
 api/settings.*.json
+sites/
+api/sites/
+client/sites/
+examples/
