@@ -1,6 +1,5 @@
 body, h1, button, p {
     margin: 0;
-    padding: 0;
     font-family: Arial, sans-serif;
 }
 
@@ -11,102 +10,51 @@ header {
     padding: 20px;
 }
 
-nav {
-    display: flex;
-    justify-content: space-around;
-    padding: 10px 0;
-    background: #333;
-}
-
-nav button {
-    background: none;
-    border: none
-    border: none;
-    color: #fff;
-    padding: 10px 20px;
-    font-size: 16px;
-    cursor: pointer;
-}
-
-nav button:focus, nav button:hover {
-    background: #555;
-}
-
-main {
-    padding: 20px;
-}
-
-#menu {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 20px;
-}
 #menu .dish-card {
     display: flex;
-    align-items: center;
-    background-color: #fff;
     border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin: 0 20px 20px 20px;
 }
 
-.dish-card {
-    display: flex;
-    justify-content: space-between;
-    background-color: #fff;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    margin-bottom: 20px; /* Add space between cards */
+#menu .dish-card:first-child {
+    margin-top: 20px;
 }
 
 .dish-card img {
+    width: 150px;
+    border-radius-top-left: 10px;
+    border-radius-bottom-left: 10px;
     height: 150px;
-    width: auto; /* Adjust width automatically */
-    border-radius: 10px; /* Optional: if you want rounded corners on images */
-    margin-left: 15px; /* Add some space between the image and the border */
+    object-fit: cover;
+    object-position: center;
 }
 
 .dish-card .content {
     padding: 15px;
-    flex-grow: 1; /* Content takes up remaining space */
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 120px
 }
 
-/* Additional styles for the content */
 .dish-card .content h3 {
-    margin: 0 0 10px 0; /* Add some margin below the title */
+    margin: 0 0 10px 0;
     color: #333;
 }
 
 .dish-card .content p {
-    margin: 0; /* Remove margin from paragraphs */
     color: #666;
 }
 
-/* Ensure the image floats right */
-.dish-card .content {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
 
-/* Update footer styles if needed */
-footer {
-    text-align: center;
-    padding: 20px;
-    background: #f2f2f2;
-}
+@media (max-width: 768px) {
+    .dish-card {
+        margin: 0 10px 10px 10px;
+    }
 
-footer button {
-    background: #4CAF50;
-    border: none;
-    padding: 10px 15px;
-    color: white;
-    font-size: 18px;
-    border-radius: 5px;
-    cursor: pointer;
+    .dish-card:first-child {
+        margin-top: 10px;
+    }
 }
-
-footer p {
-    margin-top: 10px;
-    color: #333;
-}
-
