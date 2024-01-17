@@ -80,14 +80,11 @@ function populateMenuTable(dishes) {
     const table = document.getElementById('menuTable').getElementsByTagName('tbody')[0];
     dishes.forEach((dish, index) => {
         const row = table.insertRow();
-        const cell1 = row.insertCell(0);
-        const cell2 = row.insertCell(1);
-        const cell3 = row.insertCell(2);
-        const cell4 = row.insertCell(3);
-        cell1.textContent = dish.name;
-        cell2.textContent = dish.description;
-        cell3.textContent = dish.price;
-        cell4.innerHTML = renderImgCell(index, dish.imgUrl);
+        row.insertCell(0).textContent = dish.name;
+        row.insertCell(1).textContent = dish.description;
+        row.insertCell(2).textContent = dish.category;
+        row.insertCell(3).textContent = dish.price;
+        row.insertCell(4).innerHTML = renderImgCell(index, dish.imgUrl);
     });
 }
 
@@ -95,14 +92,11 @@ function addDish() {
     const table = document.getElementById('menuTableBody');
     const row = table.insertRow();
     const index = table.rows.length - 1;
-    const cell1 = row.insertCell(0);
-    const cell2 = row.insertCell(1);
-    const cell3 = row.insertCell(2);
-    const cell4 = row.insertCell(3);
-    cell1.innerHTML = '<input type="text" placeholder="Name">';
-    cell2.innerHTML = '<input type="text" placeholder="Description">';
-    cell3.innerHTML = '<input type="text" placeholder="Price">';
-    cell4.innerHTML = renderImgCell(index, '');
+    row.insertCell(0).innerHTML = '<input type="text" placeholder="Name">';
+    row.insertCell(1).innerHTML = '<input type="text" placeholder="Description">';
+    row.insertCell(2).innerHTML = '<input type="text" placeholder="Category">';
+    row.insertCell(3).innerHTML = '<input type="text" placeholder="Price">';
+    row.insertCell(4).innerHTML = renderImgCell(index, '');
 }
 
 async function uploadImage(input, index) {
@@ -129,13 +123,12 @@ async function updateMenu() {
         let row = table.rows[i];
         let name = row.cells[0].querySelector('input')?.value || row.cells[0].textContent;
         let description = row.cells[1].querySelector('input')?.value || row.cells[1].textContent;
-        let price = row.cells[2].querySelector('input')?.value || row.cells[2].textContent;
-        let src = row.cells[3].querySelector('img')?.src;
+        let category = row.cells[2].querySelector('input')?.value || row.cells[2].textContent;
+        let price = row.cells[3].querySelector('input')?.value || row.cells[3].textContent;
+        let src = row.cells[4].querySelector('img')?.src;
         let imgUrl = src || '';
-        dishes.push({name, price, description, imgUrl});
+        dishes.push({name, description, category, price, imgUrl});
     }
-        console.log(`dishes: ${JSON.stringify(dishes)}`);
-
     try {
         const response = await fetch(`${API}/?token=${encodeURIComponent(localStorage.getItem('token'))}`, {
             method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(dishes)

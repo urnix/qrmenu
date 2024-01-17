@@ -10,6 +10,33 @@ header {
     padding: 20px;
 }
 
+#categories {
+    margin: 20px;
+}
+
+#categories a {
+    margin-right: 10px;
+    margin-bottom: 10px;
+    background: black;
+    color: white;
+    text-decoration: none;
+    padding: 10px;
+    border-radius: 20px;
+    display: inline-block;
+    border: 1px solid black;
+}
+
+#categories a:hover {
+    background: white;
+    color: black;
+}
+
+#menu .category-label {
+    margin: 20px;
+    text-align: center;
+
+}
+
 #menu .dish-card {
     display: flex;
     border-radius: 10px;

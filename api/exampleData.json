@@ -2,60 +2,70 @@
   {
     "name": "Caviar",
     "description": "Description",
+    "category": "Salting",
     "price": "100",
     "imgUrl": "${domain}/imgs/examples/set/caviar.jpeg"
   },
   {
     "name": "Borsch",
     "description": "Description",
+    "category":  "Soups",
     "price": "100",
     "imgUrl": "${domain}/imgs/examples/set/borsch.jpg"
   },
   {
     "name": "Cezar",
     "description": "Description",
+    "category":  "Salads",
     "price": "100",
     "imgUrl": "${domain}/imgs/examples/set/cezar.jpg"
   },
   {
     "name": "Kebab",
     "description": "Description",
+    "category":  "Meat",
     "price": "100",
     "imgUrl": "${domain}/imgs/examples/set/kebab.jpg"
   },
   {
     "name": "Oyster",
     "description": "Description",
+    "category":  "Seafood",
     "price": "100",
     "imgUrl": "${domain}/imgs/examples/set/oysters.jpg"
   },
   {
     "name": "Tiramisu",
     "description": "Description",
+    "category":  "Desserts",
     "price": "100",
     "imgUrl": "${domain}/imgs/examples/set/tiramisu.jpeg"
   },
   {
     "name": "Pizza",
     "description": "Description",
+    "category":  "Pizzas",
     "price": "100",
     "imgUrl": "${domain}/imgs/examples/set/pizza.jpeg"
   },
   {
     "name": "Ramen",
     "description": "Description",
+    "category":  "Soups",
     "price": "100",
     "imgUrl": "${domain}/imgs/examples/set/ramen.webp"
   },
   {
     "name": "Hamburger",
     "description": "Description",
+    "category":  "Burgers",
     "price": "100",
     "imgUrl": "${domain}/imgs/examples/set/hamburger.jpeg"
   },
   {
     "name": "Cappuccino",
     "description": "Description",
+    "category":  "Beverages",
     "price": "100",
     "imgUrl": "${domain}/imgs/examples/set/cappuccino.jpeg"
   }

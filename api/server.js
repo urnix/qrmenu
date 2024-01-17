@@ -58,6 +58,7 @@ function createDishCard(dish) {
       <div class="content">
         <h3>${dish.name}</h3>
         <p>${dish.description}</p>
+        <p>${dish.category}</p>
         <p>${dish.price} TL</p>
       </div>
     </div>
@@ -162,19 +163,30 @@ app.get('/', (req, res) => {
 });
 
 function saveDataAndPage(login, data) {
-    console.log(`data: ${JSON.stringify(data)}`);
     fs.writeFileSync(`${sitesDir}/${login}/data.json`, JSON.stringify(data));
-    let menu;
+    let menu = '';
     if (!data.length) {
         menu = '<p>There are no dishes yet</p>';
     }
-    menu = data.map(createDishCard).join('');
+    data.sort((a, b) => a.category.localeCompare(b.category));
+    const categories = data.reduce((a, c) => a.includes(c.category) ? a : [...a, c.category], []);
+    let categoriesHtml = '';
+    for (const category of categories) {
+        categoriesHtml += `<a href="#${category.toLowerCase()}">${category}</a>`
+    }
+    for (let i = 0; i < data.length; i++) {
+        if (i === 0 || data[i].category !== data[i - 1].category) {
+            menu += `<h1 class="category-label" id="${data[i].category.toLowerCase()}">${data[i].category}</h1>`;
+        }
+        menu += createDishCard(data[i]);
+    }
     let htmlContent = fs.readFileSync('./templates/index.html', 'utf8');
     let cssContent = fs.readFileSync('./templates/style.css', 'utf8');
     htmlContent = htmlContent
         .replace('${domain}', settings.DOMAIN)
         .replace('${styles}', cssContent)
         .replace('${login}', login)
+        .replace('${categories}', categoriesHtml)
         .replace('${menu}', menu);
     fs.writeFileSync(`${sitesDir}/${login}/index.html`, htmlContent);
     if (!fs.existsSync(`${sitesDir}/${login}/index.html`)) {
