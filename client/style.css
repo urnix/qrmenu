@@ -22,3 +22,16 @@ th, td {
 th {
     background-color: #f2f2f2;
 }
+
+#menuTableBody td:nth-child(4) {
+    text-align: center;
+}
+
+.hidden {
+    display: none;
+}
+
+.dishImage {
+    height: 50px;
+    cursor: pointer;
+}

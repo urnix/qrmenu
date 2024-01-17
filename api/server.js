@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const QRCode = require('qrcode');
 const path = require('path');
+const multer = require('multer');
 
 const credentialsPath = './credentials.txt';
 /**
@@ -209,46 +210,56 @@ function generateQRCode(login) {
 }
 
 app.post('/', (req, res) => {
-    const {login, password} = req.body;
-    if (!isValidData(login) || !isValidData(password)) {
-        return res.status(422).send('Please use only letters, numbers, - and _');
-    }
-    const token = jwt.sign({login, password, exp: Math.floor(Date.now() / 1000) + (60 * 60)}, settings.KEY);
-
-    const credentials = fs.readFileSync(credentialsPath, 'utf8').split('\n');
-    const user = credentials.find(line => line.startsWith(login + '\t'));
-    if (user) {
-        const userPassword = user.split('\t')[1];
-        if (userPassword !== password) {
-            return res.status(401).send('Wrong password');
+    try {
+        const {login, password} = req.body;
+        if (!isValidData(login) || !isValidData(password)) {
+            return res.status(422).send('Please use only letters, numbers, - and _');
         }
+        const token = jwt.sign({login, password, exp: Math.floor(Date.now() / 1000) + (60 * 60)}, settings.KEY);
+
+        const credentials = fs.readFileSync(credentialsPath, 'utf8').split('\n');
+        const user = credentials.find(line => line.startsWith(login + '\t'));
+        if (user) {
+            const userPassword = user.split('\t')[1];
+            if (userPassword !== password) {
+                return res.status(401).send('Wrong password');
+            }
+            return res.status(200).json({token});
+        }
+
+        fs.appendFileSync(credentialsPath, `${login}\t${password}\n`);
+        fs.mkdirSync(`${sitesDir}/${login}`);
+        fs.mkdirSync(`${sitesDir}/${login}/imgs`);
+        const exampleData = new Array(10).fill(0).map((_, i) => ({
+            name: 'Dish' + i,
+            description: 'Description' + i,
+            price: '10' + i,
+            imgUrl: '../dish_placeholder.png?q=' + i
+        }));
+        fs.writeFileSync(`${sitesDir}/${login}/data.json`, JSON.stringify(exampleData));
+        saveMenuPage(login, '<p>There are no dishes yet</p>');
+        generateQRCode(login);
+
         return res.status(200).json({token});
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send('Server error');
     }
-
-    fs.appendFileSync(credentialsPath, `${login}\t${password}\n`);
-    fs.mkdirSync(`${sitesDir}/${login}`);
-    fs.mkdirSync(`${sitesDir}/${login}/imgs`);
-    const exampleData = new Array(100).fill(0).map((_, i) => ({
-        name: 'Dish' + i,
-        description: 'Description' + i,
-        price: '10' + i,
-        imgUrl: '../dish_placeholder.png?q=' + i
-    }));
-    fs.writeFileSync(`${sitesDir}/${login}/data.json`, JSON.stringify(exampleData));
-    saveMenuPage(login, '<p>There are no dishes yet</p>');
-    generateQRCode(login);
-
-    return res.status(200).json({token});
 });
 
 app.get('/', (req, res) => {
+    let decoded;
     try {
-        const {token} = req.query;
-        const decoded = jwt.verify(token, settings.KEY);
+        decoded = jwt.verify(req.query.token, settings.KEY);
+    } catch (error) {
+        return res.status(401).send('Session expired');
+    }
+    try {
         const data = fs.readFileSync(`${sitesDir}/${decoded.login}/data.json`, 'utf8');
         return res.status(200).json({token: prolongToken(decoded), login: decoded.login, data: JSON.parse(data)});
     } catch (error) {
-        return res.status(401).send('Session expired');
+        console.error(error);
+        return res.status(500).send('Server error');
     }
 });
 
@@ -265,13 +276,31 @@ app.put('/', (req, res) => {
 
         fs.writeFileSync(`${sitesDir}/${decoded.login}/data.json`, JSON.stringify(data));
 
-        saveMenuPage(decoded.login, `<table>${generateMenuTable(data)}</table>`);
+        saveMenuPage(decoded.login, generateMenuTable(data));
 
         return res.status(200).json({token: prolongToken(decoded)});
     } catch (error) {
         console.error(error);
         return res.status(500).send('Server error');
     }
+});
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const uploadPath = path.join(sitesDir, req.params.login, 'imgs');
+        fs.mkdirSync(uploadPath, {recursive: true});
+        cb(null, uploadPath);
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+const upload = multer({storage: storage});
+
+app.post('/upload/:login/:index', upload.single('image'), function (req, res, next) {
+    const imageUrl = `${req.protocol}://${req.get('host')}/${req.params.login}/imgs/${req.file.filename}`;
+    res.json({imgUrl: imageUrl});
 });
 
 const port = 3001;

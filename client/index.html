@@ -16,12 +16,16 @@
   <img id="qrCode" src="" onclick="openQRCode()">
   <button onclick="logout()">Logout</button>
   <table id="menuTable">
-    <tr>
-      <th>Dish</th>
-      <th>Description</th>
-      <th>Price</th>
-      <th>Image</th>
-    </tr>
+    <thead>
+      <tr>
+        <th>Dish</th>
+        <th>Description</th>
+        <th>Price</th>
+        <th>Image</th>
+      </tr>
+    </thead>
+    <tbody id="menuTableBody">
+    </tbody>
   </table>
   <button onclick="addDish()">Add dish</button>
   <button onclick="updateMenu()">Update menu</button>
