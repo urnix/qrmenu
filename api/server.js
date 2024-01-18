@@ -218,18 +218,24 @@ function saveDataAndPage(id, data) {
     if (!data.length) {
         menu = '<p>There are no dishes yet</p>';
     }
-    data.sort((a, b) => a.category.localeCompare(b.category));
+    // data.sort((a, b) => a.category.localeCompare(b.category));
     const categories = data.reduce((a, c) => a.includes(c.category) ? a : [...a, c.category], []);
     let categoriesHtml = '';
     for (const category of categories) {
         categoriesHtml += `<a href="#${category.toLowerCase()}">${category}</a>`
     }
     for (let i = 0; i < data.length; i++) {
+        if (i > 0 && data[i].category !== data[i - 1].category) {
+            menu += '<div class="dish-card dish-card-filler"></div><div class="dish-card dish-card-filler"></div><div class="dish-card dish-card-filler"></div>';
+            menu += '</div>';
+        }
         if (i === 0 || data[i].category !== data[i - 1].category) {
-            menu += `<h1 class="category-label" id="${data[i].category.toLowerCase()}">${data[i].category}</h1>`;
+            menu += `<h1 class="category-label" id="${data[i].category.toLowerCase()}">${data[i].category}</h1><div class="category-container">`;
         }
         menu += createDishCard(data[i]);
     }
+    menu += '<div class="dish-card dish-card-filler"></div><div class="dish-card dish-card-filler"></div><div class="dish-card dish-card-filler"></div>';
+    menu += '</div>';
     let htmlContent = fs.readFileSync('./templates/index.html', 'utf8');
     let cssContent = fs.readFileSync('./templates/style.css', 'utf8');
     htmlContent = htmlContent

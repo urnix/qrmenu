@@ -42,10 +42,12 @@ header {
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     margin: 0 20px 20px 20px;
+    min-width: 335px;
 }
 
-#menu .dish-card:first-child {
-    margin-top: 20px;
+#menu .dish-card-filler {
+    visibility: hidden;
+    margin-bottom: 0;
 }
 
 .dish-card img {
@@ -75,7 +77,6 @@ header {
     color: #666;
 }
 
-
 @media (max-width: 768px) {
     .dish-card {
         margin: 0 10px 10px 10px;
@@ -83,5 +84,14 @@ header {
 
     .dish-card:first-child {
         margin-top: 10px;
+    }
+}
+
+@media (min-width: 750px) {
+    .category-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(375px, 1fr));
+        gap: 20px;
+        padding-top: 20px;
     }
 }
