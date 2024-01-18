@@ -26,12 +26,10 @@ app.use((req, res, next) => {
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     next();
 });
-app.use('/:login', (req, res, next) => {
-    const userDir = path.join(sitesDir, req.params.login);
-    express.static(userDir)(req, res, next);
-});
-
-const isValidData = (data) => /^[a-zA-Z0-9-_]+$/.test(data);
+// app.use('/:login', (req, res, next) => {
+//     const userDir = path.join(sitesDir, req.params.login);
+//     express.static(userDir)(req, res, next);
+// });
 
 function recCopy(s, s2) {
     const stat = fs.statSync(s);
@@ -66,12 +64,13 @@ function createDishCard(dish) {
 }
 
 function prolongToken(decoded) {
-    return jwt.sign({...decoded, exp: Math.floor(Date.now() / 1000) + (60 * 60)}, settings.KEY);
+    let payload = {...decoded, exp: Math.floor(Date.now() / 1000) + (60 * 60)};
+    return jwt.sign(payload, settings.KEY);
 }
 
-async function generateQRCode(login) {
+async function generateQRCode(id) {
     return new Promise((resolve, reject) => {
-        QRCode.toFile(`${sitesDir}/${login}/qr.png`, settings.DOMAIN + `/sites/` + login, {
+        QRCode.toFile(`${sitesDir}/${id}/qr.png`, settings.DOMAIN + `/sites/` + id, {
             color: {
                 dark: '#000',
                 light: '#FFF'
@@ -85,65 +84,90 @@ async function generateQRCode(login) {
     });
 }
 
-app.post('/', async (req, res) => {
+app.post('/register', async (req, res) => {
     try {
-        const {login, password} = req.body;
-        if (!isValidData(login) || !isValidData(password)) {
-            return res.status(422).send('Please use only letters, numbers, - and _');
+        const {email, password, name} = req.body;
+        if (!email || !password || !name) {
+            return res.status(422).send('Missing required fields');
         }
-        const token = jwt.sign({login, password, exp: Math.floor(Date.now() / 1000) + (60 * 60)}, settings.KEY);
-
-        const credentials = fs.readFileSync(credentialsPath, 'utf8').split('\n');
-        const user = credentials.find(line => line.startsWith(login + '\t'));
+        if (!/.+@.+\..+/.test(email)) {
+            return res.status(422).send('Please enter a valid email address');
+        }
+        const user = findUser(undefined, email);
         if (user) {
-            const userPassword = user.split('\t')[1];
-            if (userPassword !== password) {
-                return res.status(401).send('Wrong password');
-            }
-            return res.status(200).json({token});
+            return res.status(409).send('Email already registered');
         }
-
-        fs.appendFileSync(credentialsPath, `${login}\t${password}\n`);
+        const credentials = fs.readFileSync(credentialsPath, 'utf8').split('\n');
+        const id = credentials.length ? credentials.length : 1;
+        let payload = {id, email, password, exp: Math.floor(Date.now() / 1000) + (60 * 60)};
+        const token = jwt.sign(payload, settings.KEY);
+        fs.appendFileSync(credentialsPath, `${id}\t${name}\t${email}\t${password}\n`);
         const credentials2 = fs.readFileSync(credentialsPath, 'utf8').split('\n');
-        if (!credentials2.find(line => line.startsWith(login + '\t'))) {
-            console.error(`Failed to save credentials for ${login}`);
+        if (!credentials2.find(line => line.startsWith(id + '\t'))) {
+            console.error(`Failed to save credentials for ${id}`);
             return res.status(500).send('Server error');
         }
-        fs.mkdirSync(`${sitesDir}/${login}`);
-        if (!fs.existsSync(`${sitesDir}/${login}`)) {
-            console.error(`Failed to create site directory for ${login}`);
+        fs.mkdirSync(`${sitesDir}/${id}`);
+        if (!fs.existsSync(`${sitesDir}/${id}`)) {
+            console.error(`Failed to create site directory for ${id}`);
             return res.status(500).send('Server error');
         }
-        fs.mkdirSync(`${sitesDir}/${login}/imgs`);
-        if (!fs.existsSync(`${sitesDir}/${login}/imgs`)) {
-            console.error(`Failed to create site directory for ${login}`);
+        fs.mkdirSync(`${sitesDir}/${id}/imgs`);
+        if (!fs.existsSync(`${sitesDir}/${id}/imgs`)) {
+            console.error(`Failed to create site directory for ${id}`);
             return res.status(500).send('Server error');
         }
-        await generateQRCode(login);
-        if (!fs.existsSync(`${sitesDir}/${login}/qr.png`)) {
-            console.error(`Failed to create QR code for ${login}`);
+        await generateQRCode(id);
+        if (!fs.existsSync(`${sitesDir}/${id}/qr.png`)) {
+            console.error(`Failed to create QR code for ${id}`);
             return res.status(500).send('Server error');
         }
         // const initData = new Array(10).fill(0).map((_, i) => ({name: 'Dish' + i, description: 'Description' + i, price: '10' + i, imgUrl: `${settings.DOMAIN}/imgs/dish_placeholder.png?q=${i}`}));
         let initData;
         if (fs.existsSync('./exampleData.json')) {
-            initData = JSON.parse(fs.readFileSync('./exampleData.json', 'utf8')).map((dish, i) => ({
+            initData = JSON.parse(fs.readFileSync('./exampleData.json', 'utf8')).map(dish => ({
                 ...dish,
                 imgUrl: dish.imgUrl.replace('${domain}', settings.DOMAIN)
             }));
         } else {
             initData = [];
         }
-        saveDataAndPage(login, initData);
-        return res.status(200).json({token});
+        saveDataAndPage(id, initData);
+        return res.status(200).json({id, name, token});
     } catch (error) {
         console.error(error);
         return res.status(500).send('Server error');
     }
 });
 
-function loadData(login) {
-    return JSON.parse(fs.readFileSync(`${sitesDir}/${login}/data.json`, 'utf8'));
+app.post('/login', async (req, res) => {
+    try {
+        const {email, password} = req.body;
+        if (!email || !password) {
+            return res.status(422).send('Missing required fields');
+        }
+        if (!/.+@.+\..+/.test(email)) {
+            return res.status(422).send('Please enter a valid email address');
+        }
+
+        const user = findUser(undefined, email);
+        if (!user) {
+            return res.status(404).send('Email not registered');
+        }
+        let payload = {id: user.id, email, password, exp: Math.floor(Date.now() / 1000) + (60 * 60)};
+        const token = jwt.sign(payload, settings.KEY);
+        if (user.password !== password) {
+            return res.status(401).send('Wrong password');
+        }
+        return res.status(200).json({id: user.id, name: user.name, token});
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send('Server error');
+    }
+});
+
+function loadData(id) {
+    return JSON.parse(fs.readFileSync(`${sitesDir}/${id}/data.json`, 'utf8'));
 }
 
 app.get('/', (req, res) => {
@@ -154,16 +178,42 @@ app.get('/', (req, res) => {
         return res.status(401).send('Session expired');
     }
     try {
-        const data = loadData(decoded.login);
-        return res.status(200).json({token: prolongToken(decoded), login: decoded.login, data});
+        const user = findUser(decoded.id);
+        if (!user) {
+            return res.status(401).send('User not found');
+        }
+        const data = loadData(decoded.id);
+        return res.status(200).json({token: prolongToken(decoded), name: user.name, id: user.id, data});
     } catch (error) {
         console.error(error);
         return res.status(500).send('Server error');
     }
 });
 
-function saveDataAndPage(login, data) {
-    fs.writeFileSync(`${sitesDir}/${login}/data.json`, JSON.stringify(data));
+function findUser(id = undefined, email = undefined) {
+    const credentials = fs.readFileSync(credentialsPath, 'utf8').split('\n');
+    let line = credentials.find(line => line.startsWith(id + '\t'));
+    if (!line) {
+        line = credentials.find(line => line.includes('\t' + email + '\t'));
+    }
+    if (!line) {
+        return undefined;
+    }
+    return {
+        id: line.split('\t')[0],
+        name: line.split('\t')[1],
+        email: line.split('\t')[2],
+        password: line.split('\t')[3].trim()
+    };
+}
+
+function saveDataAndPage(id, data) {
+    const user = findUser(id);
+    if (!user) {
+        console.error(`User ${id} not found`);
+        throw new Error('User not found');
+    }
+    fs.writeFileSync(`${sitesDir}/${id}/data.json`, JSON.stringify(data));
     let menu = '';
     if (!data.length) {
         menu = '<p>There are no dishes yet</p>';
@@ -185,16 +235,16 @@ function saveDataAndPage(login, data) {
     htmlContent = htmlContent
         .replace('${domain}', settings.DOMAIN)
         .replace('${styles}', cssContent)
-        .replace('${login}', login)
+        .replace('${name}', user.name)
         .replace('${categories}', categoriesHtml)
         .replace('${menu}', menu);
-    fs.writeFileSync(`${sitesDir}/${login}/index.html`, htmlContent);
-    if (!fs.existsSync(`${sitesDir}/${login}/index.html`)) {
-        console.error(`Failed to create page for ${login}`);
+    fs.writeFileSync(`${sitesDir}/${id}/index.html`, htmlContent);
+    if (!fs.existsSync(`${sitesDir}/${id}/index.html`)) {
+        console.error(`Failed to create page for ${id}`);
         throw new Error('Failed to create page');
     }
     if (isLocal) {
-        recCopy(`sites/${login}`, `../client/sites/${login}`);
+        recCopy(`sites/${id}`, `../client/sites/${id}`);
     }
 }
 
@@ -207,7 +257,7 @@ app.put('/', (req, res) => {
         return res.status(401).send('Session expired');
     }
     try {
-        saveDataAndPage(decoded.login, req.body);
+        saveDataAndPage(decoded.id, req.body);
         return res.status(200).json({token: prolongToken(decoded)});
     } catch (error) {
         console.error(error);
@@ -217,7 +267,7 @@ app.put('/', (req, res) => {
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        const uploadPath = path.join(sitesDir, req.params.login, 'imgs');
+        const uploadPath = path.join(sitesDir, req.params.id, 'imgs');
         fs.mkdirSync(uploadPath, {recursive: true});
         cb(null, uploadPath);
     },
@@ -228,11 +278,11 @@ const storage = multer.diskStorage({
 });
 const upload = multer({storage: storage});
 
-app.post('/upload/:login/:index', upload.single('image'), function (req, res) {
-    const imageUrl = `${settings.DOMAIN}/sites/${req.params.login}/imgs/${req.file.filename}`;
-    const data = loadData(req.params.login);
+app.post('/upload/:id/:index', upload.single('image'), function (req, res) {
+    const imageUrl = `${settings.DOMAIN}/sites/${req.params.id}/imgs/${req.file.filename}`;
+    const data = loadData(req.params.id);
     data[req.params.index].imgUrl = imageUrl;
-    saveDataAndPage(req.params.login, data);
+    saveDataAndPage(req.params.id, data);
     res.json({imgUrl: imageUrl});
 });
 

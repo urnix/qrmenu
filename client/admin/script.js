@@ -2,66 +2,137 @@ const isLocal = window.location.href.includes('localhost') || window.location.hr
 const API = isLocal ? 'http://localhost:3001' : 'https://api.m.artme.dev';
 const DOMAIN = isLocal ? 'file:///Users/fen1x/dev/my/menu/client' : 'https://m.artme.dev';
 
-let login_ = '';
+let id_ = '';
+let name_ = '';
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (localStorage.getItem('token')) {
         showRestaurantPage();
-        await loadMenuData();
+        await loadData();
     } else {
         showLoginForm();
     }
 });
 
+function showRegisterForm() {
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('registerForm').style.display = 'block';
+    document.getElementById('restaurantPage').style.display = 'none';
+}
+
 function showLoginForm() {
     document.getElementById('loginForm').style.display = 'block';
+    document.getElementById('registerForm').style.display = 'none';
     document.getElementById('restaurantPage').style.display = 'none';
 }
 
 function showRestaurantPage() {
     document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('registerForm').style.display = 'none';
     document.getElementById('restaurantPage').style.display = 'block';
 }
 
-async function login() {
-    const login = document.getElementById('login').value;
-    this.login_ = login;
-    const password = document.getElementById('password').value;
+async function register(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    event.cancelBubble = true;
+    event.returnValue = false;
+    const name = document.querySelector('#registerForm .input-name').value;
+    const email = document.querySelector('#registerForm .input-email').value;
+    const password = document.querySelector('#registerForm .input-password').value;
+    const passwordConfirm = document.querySelector('#registerForm .input-passwordConfirm').value;
+    if (!name || !email || !password || !passwordConfirm) {
+        alert('All fields are required');
+        return;
+    }
+    if (!/.+@.+\..+/.test(email)) {
+        alert('Invalid email');
+        return;
+    }
+    if (password !== passwordConfirm) {
+        alert('Passwords do not match');
+        return;
+    }
     try {
-        const response = await fetch(`${API}/`, {
+        const response = await fetch(`${API}/register`, {
             method: 'POST', headers: {'Content-Type': 'application/json',},
-            body: JSON.stringify({login, password})
+            body: JSON.stringify({name, email, password})
         });
         if (response.ok) {
             const data = await response.json();
+            id_ = data.id;
+            name_ = name;
             localStorage.setItem('token', data.token);
             showRestaurantPage();
-            await loadMenuData();
+            await loadData();
+        } else {
+            alert(await response.text());
         }
     } catch (error) {
         console.error(error);
-        alert('Registration/login failed');
+        alert('Registration failed');
+    }
+}
+
+async function login(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    event.cancelBubble = true;
+    event.returnValue = false;
+    const email = document.querySelector('#loginForm .input-email').value;
+    const password = document.querySelector('#loginForm .input-password').value;
+    try {
+        const response = await fetch(`${API}/login`, {
+            method: 'POST', headers: {'Content-Type': 'application/json',},
+            body: JSON.stringify({email, password})
+        });
+        if (response.ok) {
+            const data = await response.json();
+            id_ = data.id;
+            name_ = data.name;
+            localStorage.setItem('token', data.token);
+            showRestaurantPage();
+            await loadData();
+        } else {
+            alert(await response.text());
+        }
+    } catch (error) {
+        console.error(error);
+        alert('Login failed');
+    }
+}
+
+function confirmLogout() {
+    if (confirm('Are you sure you want to log out?')) {
+        this.logout();
     }
 }
 
 function logout() {
-    if (confirm('Are you sure you want to log out?')) {
-        localStorage.removeItem('token');
-        location.reload();
-    }
+    id_ = '';
+    name_ = '';
+    localStorage.removeItem('token');
+    location.reload();
 }
 
-async function loadMenuData() {
+async function loadData() {
     const token = localStorage.getItem('token');
     try {
         const response = await fetch(`${API}/?token=${encodeURIComponent(token)}`);
         if (response.ok) {
             const data = await response.json();
-            this.login_ = data.login;
-            document.getElementById('restaurantName').innerHTML = `Menu of <a href="${DOMAIN}/sites/${data.login}/index.html" target="_blank">${data.login}</a>`;
-            document.getElementById('qrCode').src = `${DOMAIN}/sites/${data.login}/qr.png`;
+            id_ = data.id;
+            name = data.name;
+            document.getElementById('restaurantName').innerHTML = `Menu of <a href="${DOMAIN}/sites/${data.id}/index.html" target="_blank">${data.name}</a>`;
+            document.getElementById('qrCode').src = `${DOMAIN}/sites/${data.id}/qr.png`;
             populateMenuTable(data.data);
+        } else if (response.status === 401) {
+            alert('Session expired');
+            this.logout()
         } else {
+            console.error(response);
             alert('Failed to load menu data');
         }
     } catch (error) {
@@ -104,10 +175,13 @@ async function uploadImage(input, index) {
     const formData = new FormData();
     formData.append('image', file);
     try {
-        const response = await fetch(`${API}/upload/${this.login_}/${index}`, {method: 'POST', body: formData});
+        const response = await fetch(`${API}/upload/${id_}/${index}`, {method: 'POST', body: formData});
         if (response.ok) {
             const result = await response.json();
             document.getElementById('menuTableBody').rows[index].cells[3].innerHTML = renderImgCell(index, result.imgUrl);
+        } else if (response.status === 401) {
+            alert('Session expired');
+            this.logout()
         } else {
             alert('Failed to upload image');
         }
@@ -136,6 +210,9 @@ async function updateMenu() {
 
         if (response.ok) {
             alert('Menu updated successfully');
+        } else if (response.status === 401) {
+            alert('Session expired');
+            this.logout()
         } else {
             alert('Failed to update menu');
         }

@@ -1,11 +1,51 @@
 body {
     font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background-color: #f4f4f4;
 }
 
-#loginForm, #restaurantPage {
+#registerForm, #loginForm, #restaurantPage {
     max-width: 600px;
     margin: auto;
     padding: 20px;
+}
+
+#registerForm, #loginForm {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 80%;
+    max-width: 400px;
+}
+
+#registerForm input, #loginForm input {
+    width: 100%;
+    margin-bottom: 15px;
+    padding: 10px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+#registerForm button, #loginForm button {
+    width: 100%;
+    padding: 10px;
+    background-color: black;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    border: 1px solid black;
+}
+
+#registerForm button:hover, #loginForm button:hover {
+    background-color: white;
+    color: black;
 }
 
 table {
