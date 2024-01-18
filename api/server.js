@@ -254,7 +254,7 @@ function saveDataAndPage(id, data) {
     }
 }
 
-app.put('/', (req, res) => {
+app.put('/dishes/:id', (req, res) => {
     let decoded;
     try {
         const {token} = req.query;
@@ -263,7 +263,16 @@ app.put('/', (req, res) => {
         return res.status(401).send('Session expired');
     }
     try {
-        saveDataAndPage(decoded.id, req.body);
+        const dishId = parseInt(req.params.id);
+        let data = loadData(decoded.id);
+        let dishIndex = data.findIndex(dish => dish.id === dishId);
+        let dish = data[dishIndex];
+        if (!dish) {
+            return res.status(404).send('Dish not found');
+        }
+        dish = {...dish, ...req.body};
+        data = [...data.slice(0, dishIndex), dish, ...data.slice(dishIndex + 1)];
+        saveDataAndPage(decoded.id, data);
         return res.status(200).json({token: prolongToken(decoded)});
     } catch (error) {
         console.error(error);
@@ -273,7 +282,7 @@ app.put('/', (req, res) => {
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        const uploadPath = path.join(sitesDir, req.params.id, 'imgs');
+        const uploadPath = path.join(sitesDir, req.params.userId, 'imgs');
         fs.mkdirSync(uploadPath, {recursive: true});
         cb(null, uploadPath);
     },
@@ -284,12 +293,31 @@ const storage = multer.diskStorage({
 });
 const upload = multer({storage: storage});
 
-app.post('/upload/:id/:index', upload.single('image'), function (req, res) {
-    const imageUrl = `${settings.DOMAIN}/sites/${req.params.id}/imgs/${req.file.filename}`;
-    const data = loadData(req.params.id);
-    data[req.params.index].imgUrl = imageUrl;
-    saveDataAndPage(req.params.id, data);
-    res.json({imgUrl: imageUrl});
+app.post('/upload/:userId/:dishId', upload.single('image'), function (req, res) {
+    let decoded;
+    try {
+        const {token} = req.query;
+        decoded = jwt.verify(token, settings.KEY);
+    } catch (error) {
+        return res.status(401).send('Session expired');
+    }
+    try {
+        const imgUrl = `${settings.DOMAIN}/sites/${req.params.userId}/imgs/${req.file.filename}`;
+        let data = loadData(decoded.id);
+        let dishId = parseInt(req.params.dishId);
+        let dishIndex = data.findIndex(dish => dish.id === dishId);
+        let dish = data[dishIndex];
+        if (!dish) {
+            return res.status(404).send('Dish not found');
+        }
+        dish = {...dish, imgUrl};
+        data = [...data.slice(0, dishIndex), dish, ...data.slice(dishIndex + 1)];
+        saveDataAndPage(decoded.id, data);
+        return res.status(200).json({token: prolongToken(decoded)});
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send('Server error');
+    }
 });
 
 const port = 3001;

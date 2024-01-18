@@ -1,5 +1,6 @@
 [
   {
+    "id": 1,
     "name": "Caviar",
     "description": "Description",
     "category": "Salting",
@@ -7,6 +8,7 @@
     "imgUrl": "${domain}/imgs/examples/set/caviar.jpeg"
   },
   {
+    "id": 2,
     "name": "Borsch",
     "description": "Description",
     "category": "Soups",
@@ -14,6 +16,7 @@
     "imgUrl": "${domain}/imgs/examples/set/borsch.jpg"
   },
   {
+    "id": 3,
     "name": "Ramen",
     "description": "Description",
     "category": "Soups",
@@ -21,6 +24,7 @@
     "imgUrl": "${domain}/imgs/examples/set/ramen.webp"
   },
   {
+    "id": 4,
     "name": "Pizza",
     "description": "Description",
     "category": "Pizzas",
@@ -28,6 +32,7 @@
     "imgUrl": "${domain}/imgs/examples/set/pizza.jpeg"
   },
   {
+    "id": 5,
     "name": "Kebab",
     "description": "Description",
     "category": "Meat",
@@ -35,6 +40,7 @@
     "imgUrl": "${domain}/imgs/examples/set/kebab.jpg"
   },
   {
+    "id": 6,
     "name": "Oyster",
     "description": "Description",
     "category": "Seafood",
@@ -42,6 +48,7 @@
     "imgUrl": "${domain}/imgs/examples/set/oysters.jpg"
   },
   {
+    "id": 7,
     "name": "Cezar",
     "description": "Description",
     "category": "Salads",
@@ -49,6 +56,7 @@
     "imgUrl": "${domain}/imgs/examples/set/cezar.jpg"
   },
   {
+    "id": 8,
     "name": "Hamburger",
     "description": "Description",
     "category": "Burgers",
@@ -56,6 +64,7 @@
     "imgUrl": "${domain}/imgs/examples/set/hamburger.jpeg"
   },
   {
+    "id": 9,
     "name": "Tiramisu",
     "description": "Description",
     "category": "Desserts",
@@ -63,6 +72,7 @@
     "imgUrl": "${domain}/imgs/examples/set/tiramisu.jpeg"
   },
   {
+    "id": 10,
     "name": "Cappuccino",
     "description": "Description",
     "category": "Beverages",
@@ -70,6 +80,7 @@
     "imgUrl": "${domain}/imgs/examples/set/cappuccino.jpeg"
   },
   {
+    "id": 11,
     "name": "Cacao",
     "description": "Description",
     "category": "Beverages",
@@ -77,6 +88,7 @@
     "imgUrl": "${domain}/imgs/examples/set/cacao.jpeg"
   },
   {
+    "id": 12,
     "name": "Green tea",
     "description": "Description",
     "category": "Beverages",
@@ -84,6 +96,7 @@
     "imgUrl": "${domain}/imgs/examples/set/green_tea.webp"
   },
   {
+    "id": 13,
     "name": "Turkish tea",
     "description": "Description",
     "category": "Beverages",
@@ -91,3 +104,19 @@
     "imgUrl": "${domain}/imgs/examples/set/turkish_tea.webp"
   }
 ]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

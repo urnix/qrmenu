@@ -2,7 +2,7 @@ const isLocal = window.location.href.includes('localhost') || window.location.hr
 const API = isLocal ? 'http://localhost:3001' : 'https://api.menu.artme.dev';
 const DOMAIN = isLocal ? 'file:///Users/fen1x/dev/my/menu/client' : 'https://menu.artme.dev';
 
-let id_ = '';
+let userId = '';
 let name_ = '';
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -72,7 +72,7 @@ async function register(event) {
         });
         if (response.ok) {
             const data = await response.json();
-            id_ = data.id;
+            userId = data.id;
             name_ = name;
             localStorage.setItem('token', data.token);
             await loadData();
@@ -102,7 +102,7 @@ async function login(event) {
         });
         if (response.ok) {
             const data = await response.json();
-            id_ = data.id;
+            userId = data.id;
             name_ = data.name;
             localStorage.setItem('token', data.token);
             await loadData(showEditor);
@@ -124,19 +124,19 @@ function confirmLogout() {
 }
 
 function logout() {
-    id_ = '';
+    userId = '';
     name_ = '';
     localStorage.removeItem('token');
     location.reload();
 }
 
-async function loadData(callback) {
+async function loadData() {
     const token = localStorage.getItem('token');
     try {
         const response = await fetch(`${API}/?token=${encodeURIComponent(token)}`);
         if (response.ok) {
             const data = await response.json();
-            id_ = data.id;
+            userId = data.id;
             name = data.name;
             document.getElementById('restaurantName').innerHTML = `Menu of <a href="${DOMAIN}/sites/${data.id}/index.html" target="_blank">${data.name}</a>`;
             document.getElementById('qrCode').src = `${DOMAIN}/sites/${data.id}/qr.png`;
@@ -155,21 +155,43 @@ async function loadData(callback) {
     }
 }
 
-function renderImgCell(index, imgUrl) {
-    return `<input id="fileInput${index}" class="hidden" type="file" 
-            onchange="uploadImage(this, '${index}')"><img class="dishImage" src="${imgUrl || `${DOMAIN}/imgs/dish_placeholder.png`}"
-            alt="Image" onclick="document.getElementById('fileInput${index}').click()">`;
+
+function renderTextCell(htmlTableCellElement, dishId, fieldName, placeholder, value) {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = placeholder;
+    input.value = value;
+    input.addEventListener('change', async () => await updateField(dishId, fieldName, input.value));
+    htmlTableCellElement.appendChild(input);
+}
+
+function renderImgCell(htmlTableCellElement, dishId, fieldName, placeholder, value) {
+    const input = document.createElement('input');
+    input.id = `fileInput${dishId}`;
+    input.className = 'hidden';
+    input.type = 'file';
+    input.placeholder = placeholder;
+    input.addEventListener('change', async () => await uploadImage(input, dishId));
+    htmlTableCellElement.appendChild(input);
+    const img = document.createElement('img');
+    img.className = 'dishImage';
+    img.src = value || `${DOMAIN}/imgs/dish_placeholder.png`;
+    img.alt = placeholder;
+    img.onclick = () => input.click();
+    htmlTableCellElement.appendChild(img);
 }
 
 function populateMenuTable(dishes) {
     const table = document.getElementById('menuTable').getElementsByTagName('tbody')[0];
-    dishes.forEach((dish, index) => {
+    table.innerHTML = '';
+    dishes.forEach((dish) => {
         const row = table.insertRow();
-        row.insertCell(0).innerHTML = `<input type="text" placeholder="Dish Name" value="${dish.name}">`
-        row.insertCell(1).innerHTML = `<input type="text" placeholder="Description" value="${dish.description}">`
-        row.insertCell(2).innerHTML = `<input type="text" placeholder="Dish Name" value="${dish.category}">`
-        row.insertCell(3).innerHTML = `<input type="text" placeholder="Dish Name" value="${dish.price}">`
-        row.insertCell(4).innerHTML = renderImgCell(index, dish.imgUrl);
+        row.id = `dish-row-${dish.id}`;
+        renderTextCell(row.insertCell(0), dish.id, 'name', 'Dish Name', dish.name);
+        renderTextCell(row.insertCell(1), dish.id, 'description', 'Description', dish.description);
+        renderTextCell(row.insertCell(2), dish.id, 'category', 'Category', dish.category);
+        renderTextCell(row.insertCell(3), dish.id, 'price', 'Price', dish.price);
+        renderImgCell(row.insertCell(4), dish.id, 'imgUrl', 'Image', dish.imgUrl);
     });
 }
 
@@ -184,15 +206,22 @@ function addDish() {
     row.insertCell(4).innerHTML = renderImgCell(index, '');
 }
 
-async function uploadImage(input, index) {
-    const file = input.files[0];
+async function uploadImage(input, dishId) {
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append('image', input.files[0]);
     try {
-        const response = await fetch(`${API}/upload/${id_}/${index}`, {method: 'POST', body: formData});
+        const response = await fetch(`${API}/upload/${userId}/${dishId}/?token=${encodeURIComponent(localStorage.getItem('token'))}`, {
+                method: 'POST',
+                body: formData
+            }
+        );
         if (response.ok) {
-            const result = await response.json();
-            document.getElementById('menuTableBody').rows[index].cells[4].innerHTML = renderImgCell(index, result.imgUrl);
+            // const result = await response.json();
+            // const index = document.getElementById(`dish-row-${dishId}`).rowIndex;
+            // let imgCell = document.getElementById('menuTableBody').rows[index].cells[4];
+            // renderImgCell(imgCell, dishId, 'imgUrl', 'Image', result.body.imgUrl);
+            await loadData();
+            toastSuccess('Image updated');
         } else if (response.status === 401) {
             toastFail('Session expired');
             this.logout()
@@ -204,26 +233,21 @@ async function uploadImage(input, index) {
     }
 }
 
-async function updateMenu() {
-    const table = document.getElementById('menuTableBody');
-    let dishes = [];
-    for (let i = 0; i < table.rows.length; i++) {
-        let row = table.rows[i];
-        let name = row.cells[0].querySelector('input')?.value || row.cells[0].textContent;
-        let description = row.cells[1].querySelector('input')?.value || row.cells[1].textContent;
-        let category = row.cells[2].querySelector('input')?.value || row.cells[2].textContent;
-        let price = row.cells[3].querySelector('input')?.value || row.cells[3].textContent;
-        let src = row.cells[4].querySelector('img')?.src;
-        let imgUrl = src || '';
-        dishes.push({name, description, category, price, imgUrl});
-    }
-    try {
-        const response = await fetch(`${API}/?token=${encodeURIComponent(localStorage.getItem('token'))}`, {
-            method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(dishes)
-        });
+function capitalize(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
 
+async function updateField(dishId, fieldName, value) {
+    try {
+        const response = await fetch(`${API}/dishes/${dishId}/?token=${encodeURIComponent(localStorage.getItem('token'))}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({[fieldName]: value})
+            }
+        );
         if (response.ok) {
-            toastSuccess('Menu updated successfully');
+            await loadData();
+            toastSuccess(`${capitalize(fieldName)} updated`);
         } else if (response.status === 401) {
             toastFail('Session expired');
             this.logout()
@@ -247,10 +271,7 @@ class Toast {
             .forEach((e) => marginBottom += e.clientHeight + 5);
         element.style.marginBottom = marginBottom + "px";
         document.body.appendChild(element);
-        setTimeout(() => {
-            element.remove();
-            console.log(`element.remove();`);
-        }, time);
+        setTimeout(() => element.remove(), time);
     }
 }
 
