@@ -10,9 +10,9 @@ body {
 }
 
 #registerForm, #loginForm, #restaurantPage {
-    max-width: 600px;
-    margin: auto;
-    padding: 20px;
+    /*max-width: 600px;*/
+    /*margin: auto;*/
+    /*padding: 20px;*/
 }
 
 #registerForm, #loginForm {
@@ -33,6 +33,16 @@ body {
     border-radius: 5px;
 }
 
+button {
+    width: 100%;
+    padding: 10px;
+    background-color: black;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    border: 1px solid black;
+}
+
 #registerForm button, #loginForm button {
     width: 100%;
     padding: 10px;
@@ -42,6 +52,8 @@ body {
     cursor: pointer;
     border: 1px solid black;
 }
+
+
 
 #registerForm button:hover, #loginForm button:hover {
     background-color: white;
@@ -61,7 +73,7 @@ table {
 .dishImage {
     height: 39px;
     width: 150px;
-    margin: 0 0 5px 0;
+    margin: 0 10px 5px 0;
     border-radius: 6px;
     box-shadow: 3px 3px 3px lightgrey;
     object-fit: cover;
@@ -115,6 +127,7 @@ table {
     opacity: .85;
     cursor: pointer;
     box-shadow: 5px 5px 5px gray;
+    padding: 0;
 }
 
 #add-dish-button:hover {
@@ -126,4 +139,31 @@ table {
     background-color: grey;
     cursor: not-allowed;
     color: white;
+}
+
+.delete-button {
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+.ib {
+    display: inline-block;
+    padding: 20px;
+}
+
+.ib:first-child {
+    float: left;
+}
+
+.ib:last-child {
+    float: right;
+}
+
+.ib h1 {
+    display: inline;
+}
+
+#qrCode {
+    height: 30px;
+    cursor: pointer;
 }

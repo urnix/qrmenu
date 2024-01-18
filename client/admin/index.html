@@ -27,21 +27,16 @@
 </form>
 
 <div id="restaurantPage" class="hidden">
-  <h1 id="restaurantName"></h1>
-  <img id="qrCode" src="" onclick="openQRCode()">
-  <button onclick="confirmLogout()">Logout</button>
+  <div>
+    <div class="ib"><h1 id="restaurantName"></h1></div>
+    <div class="ib"><img id="qrCode" src="" onclick="openQRCode()"></div>
+    <div class="ib">
+      <button onclick="confirmLogout()">Logout</button>
+    </div>
+  </div>
+
   <table id="menuTable">
-<!--    <thead>-->
-<!--    <tr>-->
-<!--      <th>Dish</th>-->
-<!--      <th>Description</th>-->
-<!--      <th>Price</th>-->
-<!--      <th>Category</th>-->
-<!--      <th>Image</th>-->
-<!--    </tr>-->
-<!--    </thead>-->
-    <tbody id="menuTableBody">
-    </tbody>
+    <tbody id="menuTableBody"></tbody>
   </table>
   <button id="add-dish-button" onclick="addDish()">+</button>
 </div>

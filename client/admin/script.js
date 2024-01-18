@@ -109,7 +109,6 @@ async function login(event) {
             await loadData(showEditor);
         } else {
             showLoginForm();
-            await new Promise(resolve => setTimeout(resolve, 1));
             toastFail(await response.text());
         }
     } catch (error) {
@@ -119,9 +118,10 @@ async function login(event) {
 }
 
 function confirmLogout() {
-    if (isLocal || confirm('Are you sure you want to log out?')) {
-        this.logout();
+    if (!isLocal && !confirm('Are you sure you want to log out?')) {
+        return;
     }
+    this.logout();
 }
 
 function logout() {
@@ -204,6 +204,15 @@ function renderImgCell(htmlTableCellElement, dishId, fieldName, placeholder, val
     htmlTableCellElement.appendChild(img);
 }
 
+function renderDelCell(htmlTableCellElement, dishId) {
+    const button = document.createElement('button');
+    button.id = `delete-button-${dishId}`;
+    button.className = 'delete-button';
+    button.textContent = 'Delete';
+    button.addEventListener('click', async () => await deleteDish(dishId));
+    htmlTableCellElement.appendChild(button);
+}
+
 function populateMenuTable(dishes, dishId, fieldName) {
     const table = document.getElementById('menuTable').getElementsByTagName('tbody')[0];
     if (!dishId) {
@@ -213,11 +222,16 @@ function populateMenuTable(dishes, dishId, fieldName) {
         const row = table.insertRow();
         row.id = `dish-row-${dishId}`;
         let dish1 = dishes.find(d => d.id === dishId);
-        renderTextCell(row.insertCell(0), dishId, 'name', 'Dish Name', dish1.name);
-        renderTextCell(row.insertCell(1), dishId, 'description', 'Description', dish1.description);
-        renderTextCell(row.insertCell(2), dishId, 'category', 'Category', dish1.category);
-        renderTextCell(row.insertCell(3), dishId, 'price', 'Price', dish1.price);
-        renderImgCell(row.insertCell(4), dishId, 'imgUrl', 'Image', dish1.imgUrl);
+        if (dish1) {
+            renderTextCell(row.insertCell(0), dishId, 'name', 'Dish Name', dish1.name);
+            renderTextCell(row.insertCell(1), dishId, 'description', 'Description', dish1.description);
+            renderTextCell(row.insertCell(2), dishId, 'category', 'Category', dish1.category);
+            renderTextCell(row.insertCell(3), dishId, 'price', 'Price', dish1.price);
+            renderImgCell(row.insertCell(4), dishId, 'imgUrl', 'Image', dish1.imgUrl);
+            renderDelCell(row.insertCell(5), dishId);
+        } else {
+            document.getElementById(`dish-row-${dishId}`).remove();
+        }
     }
     dishes.forEach((dish) => {
         if (!dishId) {
@@ -228,6 +242,7 @@ function populateMenuTable(dishes, dishId, fieldName) {
             renderTextCell(row.insertCell(2), dish.id, 'category', 'Category', dish.category);
             renderTextCell(row.insertCell(3), dish.id, 'price', 'Price', dish.price);
             renderImgCell(row.insertCell(4), dish.id, 'imgUrl', 'Image', dish.imgUrl);
+            renderDelCell(row.insertCell(5), dish.id);
         } else if (dish.id === dishId) {
             const row = document.getElementById(`dish-row-${dishId}`);
             if (fieldName === 'name') {
@@ -325,6 +340,40 @@ async function updateDish(dishId, fieldName, value) {
     } catch (error) {
         toastFail(`Error updating ${capitalize(fieldName)}`);
     }
+}
+
+async function deleteDish(dishId) {
+    if (!isLocal && !confirm('Are you sure you want to delete dish?')) {
+        return;
+    }
+    let deleteButton = document.getElementById(`delete-button-${dishId}`);
+    try {
+        deleteButton.disabled = true;
+        const response = await fetch(`${API}/dishes/${dishId}/?token=${encodeURIComponent(localStorage.getItem('token'))}`, {
+                method: 'DELETE',
+                headers: {'Content-Type': 'application/json'},
+            }
+        );
+        if (response.ok) {
+            await loadData(dishId);
+            toastSuccess(`Dish deleted`);
+        } else if (response.status === 401) {
+            toastFail('Session expired');
+            this.logout()
+        } else {
+            toastFail(`Failed to delete dish`);
+        }
+    } catch (error) {
+
+        toastFail(`Error deleting dish`);
+    } finally {
+        deleteButton.disabled = true;
+    }
+}
+
+
+function openQRCode() {
+    window.open(document.getElementById('qrCode').src, '_blank');
 }
 
 class Toast {

@@ -301,6 +301,31 @@ app.put('/dishes/:id', (req, res) => {
     }
 });
 
+app.delete('/dishes/:id', (req, res) => {
+    let decoded;
+    try {
+        const {token} = req.query;
+        decoded = jwt.verify(token, settings.KEY);
+    } catch (error) {
+        return res.status(401).send('Session expired');
+    }
+    try {
+        const dishId = parseInt(req.params.id);
+        let data = loadData(decoded.id);
+        let dishIndex = data.findIndex(dish => dish.id === dishId);
+        let dish = data[dishIndex];
+        if (!dish) {
+            return res.status(404).send('Dish not found');
+        }
+        data = [...data.slice(0, dishIndex), ...data.slice(dishIndex + 1)];
+        saveDataAndPage(decoded.id, data);
+        return res.status(200).json({token: prolongToken(decoded)});
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send('Server error');
+    }
+});
+
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         const uploadPath = path.join(sitesDir, req.params.userId, 'imgs');
