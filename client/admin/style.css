@@ -49,23 +49,9 @@ body {
 }
 
 table {
-    width: 100%;
+    /*width: 100%;*/
     border-collapse: collapse;
-    background-color: white;
-}
-
-th, td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
-}
-
-th {
-    background-color: #f2f2f2;
-}
-
-#menuTableBody td:nth-child(5) {
-    text-align: center;
+    /*background-color: white;*/
 }
 
 .hidden {
@@ -73,6 +59,30 @@ th {
 }
 
 .dishImage {
-    height: 50px;
+    height: 39px;
+    width: 150px;
+    margin: 0 0 5px 0;
+    border-radius: 6px;
+    box-shadow: 3px 3px 3px lightgrey;
+    object-fit: cover;
+    object-position: center;
     cursor: pointer;
+}
+
+#menuTableBody td {
+    /*border: 0;*/
+}
+
+#menuTableBody td input {
+    margin: 0 10px 10px 0;
+    border: 0;
+    padding: 10px;
+    border-radius: 6px;
+    box-shadow: 3px 3px 3px lightgrey;
+    font-size: 16px;
+    color: #646363;
+}
+
+::placeholder {
+    color: lightgrey;
 }

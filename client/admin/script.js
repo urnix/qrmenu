@@ -118,7 +118,7 @@ async function login(event) {
 }
 
 function confirmLogout() {
-    if (confirm('Are you sure you want to log out?')) {
+    if (isLocal || confirm('Are you sure you want to log out?')) {
         this.logout();
     }
 }
@@ -165,10 +165,10 @@ function populateMenuTable(dishes) {
     const table = document.getElementById('menuTable').getElementsByTagName('tbody')[0];
     dishes.forEach((dish, index) => {
         const row = table.insertRow();
-        row.insertCell(0).textContent = dish.name;
-        row.insertCell(1).textContent = dish.description;
-        row.insertCell(2).textContent = dish.category;
-        row.insertCell(3).textContent = dish.price;
+        row.insertCell(0).innerHTML = `<input type="text" placeholder="Dish Name" value="${dish.name}">`
+        row.insertCell(1).innerHTML = `<input type="text" placeholder="Description" value="${dish.description}">`
+        row.insertCell(2).innerHTML = `<input type="text" placeholder="Dish Name" value="${dish.category}">`
+        row.insertCell(3).innerHTML = `<input type="text" placeholder="Dish Name" value="${dish.price}">`
         row.insertCell(4).innerHTML = renderImgCell(index, dish.imgUrl);
     });
 }
