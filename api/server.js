@@ -7,7 +7,7 @@ const QRCode = require('qrcode');
 const path = require('path');
 const multer = require('multer');
 
-const credentialsPath = './credentials.txt';
+const credentialsPath = './data/credentials.txt';
 /**
  * @typedef {Object} Settings
  * @property {string} KEY
