@@ -4,6 +4,7 @@ const DOMAIN = isLocal ? 'file:///Users/fen1x/dev/my/menu/client' : 'https://men
 
 let userId = '';
 let name_ = '';
+let updateInProcess = false;
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (localStorage.getItem('token')) {
@@ -130,7 +131,7 @@ function logout() {
     location.reload();
 }
 
-async function loadData() {
+async function loadData(dishId, fieldName) {
     const token = localStorage.getItem('token');
     try {
         const response = await fetch(`${API}/?token=${encodeURIComponent(token)}`);
@@ -140,7 +141,7 @@ async function loadData() {
             name = data.name;
             document.getElementById('restaurantName').innerHTML = `Menu of <a href="${DOMAIN}/sites/${data.id}/index.html" target="_blank">${data.name}</a>`;
             document.getElementById('qrCode').src = `${DOMAIN}/sites/${data.id}/qr.png`;
-            populateMenuTable(data.data);
+            populateMenuTable(data.data, dishId, fieldName);
             showEditor();
         } else if (response.status === 401) {
             toastFail('Session expired');
@@ -155,17 +156,39 @@ async function loadData() {
     }
 }
 
-
-function renderTextCell(htmlTableCellElement, dishId, fieldName, placeholder, value) {
+function renderTextCell(htmlTableCellElement, dishId, fieldName, placeholder, value, update = false) {
+    if (update) {
+        let existingInput = htmlTableCellElement.querySelector('input');
+        existingInput.value = value;
+        existingInput.disabled = false;
+        return;
+    }
     const input = document.createElement('input');
     input.type = 'text';
     input.placeholder = placeholder;
     input.value = value;
-    input.addEventListener('change', async () => await updateField(dishId, fieldName, input.value));
+    input.addEventListener('change', async () => {
+        const t = setInterval(async () => {
+            if (updateInProcess) {
+                return;
+            }
+            updateInProcess = true;
+            input.disabled = true;
+            await updateDish(dishId, fieldName, input.value);
+            clearInterval(t);
+            updateInProcess = false;
+        }, 100);
+    });
     htmlTableCellElement.appendChild(input);
 }
 
-function renderImgCell(htmlTableCellElement, dishId, fieldName, placeholder, value) {
+function renderImgCell(htmlTableCellElement, dishId, fieldName, placeholder, value, update = false) {
+    if (update) {
+        let existingImg = htmlTableCellElement.querySelector('img');
+        existingImg.src = value || `${DOMAIN}/imgs/dish_placeholder.png`;
+        existingImg.disabled = false;
+        return;
+    }
     const input = document.createElement('input');
     input.id = `fileInput${dishId}`;
     input.className = 'hidden';
@@ -181,29 +204,49 @@ function renderImgCell(htmlTableCellElement, dishId, fieldName, placeholder, val
     htmlTableCellElement.appendChild(img);
 }
 
-function populateMenuTable(dishes) {
+function populateMenuTable(dishes, dishId, fieldName) {
     const table = document.getElementById('menuTable').getElementsByTagName('tbody')[0];
-    table.innerHTML = '';
-    dishes.forEach((dish) => {
+    if (!dishId) {
+        table.innerHTML = '';
+    }
+    if (dishId && !fieldName) {
         const row = table.insertRow();
-        row.id = `dish-row-${dish.id}`;
-        renderTextCell(row.insertCell(0), dish.id, 'name', 'Dish Name', dish.name);
-        renderTextCell(row.insertCell(1), dish.id, 'description', 'Description', dish.description);
-        renderTextCell(row.insertCell(2), dish.id, 'category', 'Category', dish.category);
-        renderTextCell(row.insertCell(3), dish.id, 'price', 'Price', dish.price);
-        renderImgCell(row.insertCell(4), dish.id, 'imgUrl', 'Image', dish.imgUrl);
+        row.id = `dish-row-${dishId}`;
+        let dish1 = dishes.find(d => d.id === dishId);
+        renderTextCell(row.insertCell(0), dishId, 'name', 'Dish Name', dish1.name);
+        renderTextCell(row.insertCell(1), dishId, 'description', 'Description', dish1.description);
+        renderTextCell(row.insertCell(2), dishId, 'category', 'Category', dish1.category);
+        renderTextCell(row.insertCell(3), dishId, 'price', 'Price', dish1.price);
+        renderImgCell(row.insertCell(4), dishId, 'imgUrl', 'Image', dish1.imgUrl);
+    }
+    dishes.forEach((dish) => {
+        if (!dishId) {
+            const row = table.insertRow();
+            row.id = `dish-row-${dish.id}`;
+            renderTextCell(row.insertCell(0), dish.id, 'name', 'Dish Name', dish.name);
+            renderTextCell(row.insertCell(1), dish.id, 'description', 'Description', dish.description);
+            renderTextCell(row.insertCell(2), dish.id, 'category', 'Category', dish.category);
+            renderTextCell(row.insertCell(3), dish.id, 'price', 'Price', dish.price);
+            renderImgCell(row.insertCell(4), dish.id, 'imgUrl', 'Image', dish.imgUrl);
+        } else if (dish.id === dishId) {
+            const row = document.getElementById(`dish-row-${dishId}`);
+            if (fieldName === 'name') {
+                renderTextCell(row.cells[0], dish.id, 'name', 'Dish Name', dish.name, true);
+            }
+            if (fieldName === 'description') {
+                renderTextCell(row.cells[1], dish.id, 'description', 'Description', dish.description, true);
+            }
+            if (fieldName === 'category') {
+                renderTextCell(row.cells[2], dish.id, 'category', 'Category', dish.category, true);
+            }
+            if (fieldName === 'price') {
+                renderTextCell(row.cells[3], dish.id, 'price', 'Price', dish.price, true);
+            }
+            if (fieldName === 'imgUrl') {
+                renderImgCell(row.cells[4], dish.id, 'imgUrl', 'Image', dish.imgUrl, true);
+            }
+        }
     });
-}
-
-function addDish() {
-    const table = document.getElementById('menuTableBody');
-    const row = table.insertRow();
-    const index = table.rows.length - 1;
-    row.insertCell(0).innerHTML = '<input type="text" placeholder="Name">';
-    row.insertCell(1).innerHTML = '<input type="text" placeholder="Description">';
-    row.insertCell(2).innerHTML = '<input type="text" placeholder="Category">';
-    row.insertCell(3).innerHTML = '<input type="text" placeholder="Price">';
-    row.insertCell(4).innerHTML = renderImgCell(index, '');
 }
 
 async function uploadImage(input, dishId) {
@@ -216,11 +259,7 @@ async function uploadImage(input, dishId) {
             }
         );
         if (response.ok) {
-            // const result = await response.json();
-            // const index = document.getElementById(`dish-row-${dishId}`).rowIndex;
-            // let imgCell = document.getElementById('menuTableBody').rows[index].cells[4];
-            // renderImgCell(imgCell, dishId, 'imgUrl', 'Image', result.body.imgUrl);
-            await loadData();
+            await loadData(dishId, 'imgUrl');
             toastSuccess('Image updated');
         } else if (response.status === 401) {
             toastFail('Session expired');
@@ -237,7 +276,36 @@ function capitalize(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
-async function updateField(dishId, fieldName, value) {
+
+async function addDish() {
+    let addButton = document.getElementById('add-dish-button');
+    try {
+        addButton.disabled = true;
+        const dish = {name: '', description: '', category: '', price: '', imgUrl: ''};
+        const response = await fetch(`${API}/dishes/?token=${encodeURIComponent(localStorage.getItem('token'))}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(dish)
+            }
+        );
+        if (response.ok) {
+            const data = await response.json();
+            await loadData(data.id);
+            toastSuccess(`Dish added`);
+        } else if (response.status === 401) {
+            toastFail('Session expired');
+            this.logout()
+        } else {
+            toastFail('Failed to add dish');
+        }
+    } catch (error) {
+        toastFail('Error adding dish');
+    } finally {
+        addButton.disabled = false;
+    }
+}
+
+async function updateDish(dishId, fieldName, value) {
     try {
         const response = await fetch(`${API}/dishes/${dishId}/?token=${encodeURIComponent(localStorage.getItem('token'))}`, {
                 method: 'PUT',
@@ -246,19 +314,18 @@ async function updateField(dishId, fieldName, value) {
             }
         );
         if (response.ok) {
-            await loadData();
+            await loadData(dishId, fieldName);
             toastSuccess(`${capitalize(fieldName)} updated`);
         } else if (response.status === 401) {
             toastFail('Session expired');
             this.logout()
         } else {
-            toastFail('Failed to update menu');
+            toastFail(`Failed to update ${capitalize(fieldName)}`);
         }
     } catch (error) {
-        toastFail('Error updating menu');
+        toastFail(`Error updating ${capitalize(fieldName)}`);
     }
 }
-
 
 class Toast {
     constructor(message, color, time) {

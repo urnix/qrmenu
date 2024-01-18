@@ -254,6 +254,27 @@ function saveDataAndPage(id, data) {
     }
 }
 
+app.post('/dishes/', (req, res) => {
+    let decoded;
+    try {
+        const {token} = req.query;
+        decoded = jwt.verify(token, settings.KEY);
+    } catch (error) {
+        return res.status(401).send('Session expired');
+    }
+    try {
+        let data = loadData(decoded.id);
+        const id = Math.max(...data.map(dish => dish.id)) + 1;
+        const dish = {...req.body, id};
+        data = [...data, dish];
+        saveDataAndPage(decoded.id, data);
+        return res.status(200).json({token: prolongToken(decoded), id});
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send('Server error');
+    }
+});
+
 app.put('/dishes/:id', (req, res) => {
     let decoded;
     try {

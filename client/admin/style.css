@@ -99,3 +99,31 @@ table {
     color: white;
     opacity: 0.8
 }
+
+#add-dish-button {
+    border-radius: 50%;
+    width: 66px;
+    height: 66px;
+    border: none;
+    background-color: black;
+    color: white;
+    font-size: 66px;
+    line-height: 66px;
+    position: fixed;
+    bottom: 50px;
+    right: 50px;
+    opacity: .85;
+    cursor: pointer;
+    box-shadow: 5px 5px 5px gray;
+}
+
+#add-dish-button:hover {
+    background-color: white;
+    color: black;
+}
+
+#add-dish-button[disabled] {
+    background-color: grey;
+    cursor: not-allowed;
+    color: white;
+}
