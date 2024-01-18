@@ -5,6 +5,7 @@ const DOMAIN = isLocal ? 'file:///Users/fen1x/dev/my/menu/client' : 'https://men
 let userId = '';
 let name_ = '';
 let updateInProcess = false;
+let dishesCount = 0;
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (localStorage.getItem('token')) {
@@ -106,7 +107,7 @@ async function login(event) {
             userId = data.id;
             name_ = data.name;
             localStorage.setItem('token', data.token);
-            await loadData(showEditor);
+            await loadData();
         } else {
             showLoginForm();
             toastFail(await response.text());
@@ -137,6 +138,7 @@ async function loadData(dishId, fieldName) {
         const response = await fetch(`${API}/?token=${encodeURIComponent(token)}`);
         if (response.ok) {
             const data = await response.json();
+            dishesCount = data.data.length;
             userId = data.id;
             name = data.name;
             document.getElementById('restaurantName').innerHTML = `Menu of <a href="${DOMAIN}/sites/${data.id}/index.html" target="_blank">${data.name}</a>`;
@@ -204,13 +206,43 @@ function renderImgCell(htmlTableCellElement, dishId, fieldName, placeholder, val
     htmlTableCellElement.appendChild(img);
 }
 
-function renderDelCell(htmlTableCellElement, dishId) {
+function renderDelCell(htmlTableCellElement, dishId, order, index, length) {
+    htmlTableCellElement.innerHTML = '';
+
     const button = document.createElement('button');
     button.id = `delete-button-${dishId}`;
     button.className = 'delete-button';
     button.textContent = 'Delete';
     button.addEventListener('click', async () => await deleteDish(dishId));
     htmlTableCellElement.appendChild(button);
+
+    const upButton = document.createElement('button');
+    upButton.id = `up-button-${dishId}`;
+    upButton.className = 'up-button';
+    upButton.textContent = 'Up';
+    if (index === 0) {
+        upButton.disabled = true;
+    }
+    upButton.addEventListener('click', async () => {
+        document.querySelectorAll('.up-button').forEach(b => b.disabled = true);
+        document.querySelectorAll('.down-button').forEach(b => b.disabled = true);
+        await updateDish(dishId, 'order', order - 1);
+    });
+    htmlTableCellElement.appendChild(upButton);
+
+    const downButton = document.createElement('button');
+    downButton.id = `down-button-${dishId}`;
+    downButton.className = 'down-button';
+    downButton.textContent = 'Down';
+    if (index === length - 1) {
+        downButton.disabled = true;
+    }
+    downButton.addEventListener('click', async () => {
+        document.querySelectorAll('.up-button').forEach((b, i) => true);
+        document.querySelectorAll('.down-button').forEach((b, i) => true);
+        await updateDish(dishId, 'order', order + 1);
+    });
+    htmlTableCellElement.appendChild(downButton);
 }
 
 function populateMenuTable(dishes, dishId, fieldName) {
@@ -223,17 +255,18 @@ function populateMenuTable(dishes, dishId, fieldName) {
         row.id = `dish-row-${dishId}`;
         let dish1 = dishes.find(d => d.id === dishId);
         if (dish1) {
+            const index = dishes.indexOf(dish1);
             renderTextCell(row.insertCell(0), dishId, 'name', 'Dish Name', dish1.name);
             renderTextCell(row.insertCell(1), dishId, 'description', 'Description', dish1.description);
             renderTextCell(row.insertCell(2), dishId, 'category', 'Category', dish1.category);
             renderTextCell(row.insertCell(3), dishId, 'price', 'Price', dish1.price);
             renderImgCell(row.insertCell(4), dishId, 'imgUrl', 'Image', dish1.imgUrl);
-            renderDelCell(row.insertCell(5), dishId);
+            renderDelCell(row.insertCell(5), dishId, dish1.order, index, dishes.length);
         } else {
             document.getElementById(`dish-row-${dishId}`).remove();
         }
     }
-    dishes.forEach((dish) => {
+    dishes.forEach((dish, index) => {
         if (!dishId) {
             const row = table.insertRow();
             row.id = `dish-row-${dish.id}`;
@@ -242,7 +275,7 @@ function populateMenuTable(dishes, dishId, fieldName) {
             renderTextCell(row.insertCell(2), dish.id, 'category', 'Category', dish.category);
             renderTextCell(row.insertCell(3), dish.id, 'price', 'Price', dish.price);
             renderImgCell(row.insertCell(4), dish.id, 'imgUrl', 'Image', dish.imgUrl);
-            renderDelCell(row.insertCell(5), dish.id);
+            renderDelCell(row.insertCell(5), dish.id, dish.order, index, dishes.length);
         } else if (dish.id === dishId) {
             const row = document.getElementById(`dish-row-${dishId}`);
             if (fieldName === 'name') {
@@ -262,6 +295,23 @@ function populateMenuTable(dishes, dishId, fieldName) {
             }
         }
     });
+    let isOrderChanged = false;
+    for (let i = 0; i < dishes.length; i++) {
+        if (dishes[i].order !== i) {
+            isOrderChanged = true;
+            break;
+        }
+    }
+
+    let rows = [...Array.from(table.rows)];
+    table.innerHTML = '';
+    dishes.sort((a, b) => a.order - b.order);
+    for (let i = 0; i < dishes.length; i++) {
+        let id = dishes[i].id;
+        let row = rows.find(r => r.id === `dish-row-${id}`);
+        table.appendChild(row);
+        renderDelCell(row.cells[5], id, dishes[i].order, i, dishes.length);
+    }
 }
 
 async function uploadImage(input, dishId) {
@@ -296,7 +346,7 @@ async function addDish() {
     let addButton = document.getElementById('add-dish-button');
     try {
         addButton.disabled = true;
-        const dish = {name: '', description: '', category: '', price: '', imgUrl: ''};
+        const dish = {name: '', description: '', category: '', price: '', imgUrl: '', order: dishesCount + 1};
         const response = await fetch(`${API}/dishes/?token=${encodeURIComponent(localStorage.getItem('token'))}`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -339,6 +389,10 @@ async function updateDish(dishId, fieldName, value) {
         }
     } catch (error) {
         toastFail(`Error updating ${capitalize(fieldName)}`);
+    } finally {
+        document.querySelectorAll('.up-button').forEach((b, i) => b.disabled = i === 0);
+        document.querySelectorAll('.down-button').forEach((b, i, p) => b.disabled = i === p.length - 1);
+
     }
 }
 

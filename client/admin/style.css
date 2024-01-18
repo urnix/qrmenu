@@ -9,10 +9,8 @@ body {
     background-color: #f4f4f4;
 }
 
-#registerForm, #loginForm, #restaurantPage {
-    /*max-width: 600px;*/
-    /*margin: auto;*/
-    /*padding: 20px;*/
+#restaurantPage {
+    height: 100vh;
 }
 
 #registerForm, #loginForm {
@@ -52,7 +50,6 @@ button {
     cursor: pointer;
     border: 1px solid black;
 }
-
 
 
 #registerForm button:hover, #loginForm button:hover {
@@ -144,6 +141,23 @@ table {
 .delete-button {
     margin-right: 10px;
     margin-bottom: 10px;
+}
+
+.delete-button, .up-button, .down-button {
+    width: 70px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    border: none;
+}
+
+.delete-button[disabled], .up-button[disabled], .down-button[disabled] {
+    background-color: grey;
+    cursor: not-allowed;
+    color: white;
+}
+
+#menuTableBody td:last-child {
+    display: flex;
 }
 
 .ib {

@@ -183,6 +183,7 @@ app.get('/', (req, res) => {
             return res.status(401).send('User not found');
         }
         const data = loadData(decoded.id);
+        data.sort((a, b) => a.order - b.order);
         return res.status(200).json({token: prolongToken(decoded), name: user.name, id: user.id, data});
     } catch (error) {
         console.error(error);
@@ -290,6 +291,13 @@ app.put('/dishes/:id', (req, res) => {
         let dish = data[dishIndex];
         if (!dish) {
             return res.status(404).send('Dish not found');
+        }
+        if (req.body.order !== undefined && req.body.order !== dish.order) {
+            let vi = data.findIndex(dish => dish.order === req.body.order);
+            let v = data[vi]
+            v.order = dish.order;
+            v = {...v, order: dish.order};
+            data = [...data.slice(0, vi), v, ...data.slice(vi + 1)];
         }
         dish = {...dish, ...req.body};
         data = [...data.slice(0, dishIndex), dish, ...data.slice(dishIndex + 1)];
