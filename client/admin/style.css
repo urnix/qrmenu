@@ -11,6 +11,7 @@ body {
 
 #restaurantPage {
     height: 100vh;
+    width: 100%;
 }
 
 #registerForm, #loginForm {
@@ -69,7 +70,7 @@ table {
 
 .dishImage {
     height: 39px;
-    width: 150px;
+    width: 200px;
     margin: 0 10px 5px 0;
     border-radius: 6px;
     box-shadow: 3px 3px 3px lightgrey;
@@ -181,3 +182,33 @@ table {
     height: 30px;
     cursor: pointer;
 }
+
+table {
+    width: 100%;
+    text-align: center;
+}
+
+@media screen and (max-width: 1199px) {
+    tr {
+        display: block;
+        padding: 10px 0;
+        margin: 30px 0;
+        box-shadow: 0 10px 10px lightgrey;
+    }
+
+    td {
+        width: 47%;
+        display: inline-block !important;
+        padding: 0 10px;
+    }
+    td > * {
+        width: 90%;
+    }
+}
+
+@media screen and (max-width: 600px) {
+    td {
+        width: 90%;
+    }
+}
+

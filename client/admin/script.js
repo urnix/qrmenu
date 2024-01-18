@@ -297,12 +297,19 @@ function populateMenuTable(dishes, dishId, fieldName) {
     });
     let isOrderChanged = false;
     for (let i = 0; i < dishes.length; i++) {
-        if (dishes[i].order !== i) {
+        if (dishes[i].order !== i + 1) {
             isOrderChanged = true;
             break;
         }
     }
 
+    console.log(`isOrderChanged: ${JSON.stringify(isOrderChanged)}`);
+
+    // TODO: how to detect order change?
+
+    // if (!isOrderChanged) {
+    //     return;
+    // }
     let rows = [...Array.from(table.rows)];
     table.innerHTML = '';
     dishes.sort((a, b) => a.order - b.order);
