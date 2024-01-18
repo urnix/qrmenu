@@ -54,15 +54,15 @@ async function register(event) {
     const password = document.querySelector('#registerForm .input-password').value;
     const passwordConfirm = document.querySelector('#registerForm .input-passwordConfirm').value;
     if (!name || !email || !password || !passwordConfirm) {
-        alert('All fields are required');
+        toastFail('All fields are required');
         return;
     }
     if (!/.+@.+\..+/.test(email)) {
-        alert('Invalid email');
+        toastFail('Invalid email');
         return;
     }
     if (password !== passwordConfirm) {
-        alert('Passwords do not match');
+        toastFail('Passwords do not match');
         return;
     }
     try {
@@ -77,12 +77,12 @@ async function register(event) {
             localStorage.setItem('token', data.token);
             await loadData();
         } else {
-            alert(await response.text());
+            toastFail(await response.text());
             showRegisterForm();
         }
     } catch (error) {
         console.error(error);
-        alert('Registration failed');
+        toastFail('Registration failed');
     }
 }
 
@@ -109,11 +109,11 @@ async function login(event) {
         } else {
             showLoginForm();
             await new Promise(resolve => setTimeout(resolve, 1));
-            alert(await response.text());
+            toastFail(await response.text());
         }
     } catch (error) {
         console.error(error);
-        alert('Login failed');
+        toastFail('Login failed');
     }
 }
 
@@ -143,15 +143,15 @@ async function loadData(callback) {
             populateMenuTable(data.data);
             showEditor();
         } else if (response.status === 401) {
-            alert('Session expired');
+            toastFail('Session expired');
             this.logout()
         } else {
             console.error(response);
-            alert('Failed to load menu data');
+            toastFail('Failed to load menu data');
         }
     } catch (error) {
         console.error(error);
-        alert('Error loading menu data');
+        toastFail('Error loading menu data');
     }
 }
 
@@ -194,13 +194,13 @@ async function uploadImage(input, index) {
             const result = await response.json();
             document.getElementById('menuTableBody').rows[index].cells[4].innerHTML = renderImgCell(index, result.imgUrl);
         } else if (response.status === 401) {
-            alert('Session expired');
+            toastFail('Session expired');
             this.logout()
         } else {
-            alert('Failed to upload image');
+            toastFail('Failed to upload image');
         }
     } catch (error) {
-        alert('Error uploading image');
+        toastFail('Error uploading image');
     }
 }
 
@@ -223,18 +223,47 @@ async function updateMenu() {
         });
 
         if (response.ok) {
-            alert('Menu updated successfully');
+            toastSuccess('Menu updated successfully');
         } else if (response.status === 401) {
-            alert('Session expired');
+            toastFail('Session expired');
             this.logout()
         } else {
-            alert('Failed to update menu');
+            toastFail('Failed to update menu');
         }
     } catch (error) {
-        alert('Error updating menu');
+        toastFail('Error updating menu');
     }
 }
 
-function openQRCode() {
-    window.open(document.getElementById('qrCode').src, '_blank');
+
+class Toast {
+    constructor(message, color, time) {
+        const element = document.createElement('div');
+        element.className = "toast";
+        element.style.backgroundColor = color;
+        element.innerHTML = message;
+        let marginBottom = 5;
+        Array.from(document.getElementsByClassName("toast"))
+            .forEach((e) => marginBottom += e.clientHeight + 5);
+        element.style.marginBottom = marginBottom + "px";
+        document.body.appendChild(element);
+        setTimeout(() => {
+            element.remove();
+            console.log(`element.remove();`);
+        }, time);
+    }
+}
+
+const ToastType = {
+    Danger: "#eb3b5a",
+    Warning: "#fdcb6e",
+    Success: "#00b894",
+}
+
+function toastSuccess(message) {
+    new Toast(message, ToastType.Success, 3000);
+}
+
+function toastFail(message) {
+    new Toast(message, ToastType.Danger, 3000);
 }
