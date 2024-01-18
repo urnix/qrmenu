@@ -1,6 +1,6 @@
 const isLocal = window.location.href.includes('localhost') || window.location.href.includes('file:///');
-const API = isLocal ? 'http://localhost:3001' : 'https://api.m.artme.dev';
-const DOMAIN = isLocal ? 'file:///Users/fen1x/dev/my/menu/client' : 'https://m.artme.dev';
+const API = isLocal ? 'http://localhost:3001' : 'https://api.menu.artme.dev';
+const DOMAIN = isLocal ? 'file:///Users/fen1x/dev/my/menu/client' : 'https://menu.artme.dev';
 
 let id_ = '';
 let name_ = '';
@@ -178,7 +178,7 @@ async function uploadImage(input, index) {
         const response = await fetch(`${API}/upload/${id_}/${index}`, {method: 'POST', body: formData});
         if (response.ok) {
             const result = await response.json();
-            document.getElementById('menuTableBody').rows[index].cells[3].innerHTML = renderImgCell(index, result.imgUrl);
+            document.getElementById('menuTableBody').rows[index].cells[4].innerHTML = renderImgCell(index, result.imgUrl);
         } else if (response.status === 401) {
             alert('Session expired');
             this.logout()
