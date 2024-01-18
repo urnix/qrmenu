@@ -7,28 +7,38 @@ let name_ = '';
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (localStorage.getItem('token')) {
-        showRestaurantPage();
+        showLoader();
         await loadData();
     } else {
         showLoginForm();
     }
 });
 
+function showLoader() {
+    document.getElementById('loader').style.display = 'block';
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('registerForm').style.display = 'none';
+    document.getElementById('restaurantPage').style.display = 'none';
+}
+
 function showRegisterForm() {
+    document.getElementById('loader').style.display = 'none';
     document.getElementById('loginForm').style.display = 'none';
     document.getElementById('registerForm').style.display = 'block';
     document.getElementById('restaurantPage').style.display = 'none';
 }
 
 function showLoginForm() {
+    document.getElementById('loader').style.display = 'none';
     document.getElementById('loginForm').style.display = 'block';
     document.getElementById('registerForm').style.display = 'none';
     document.getElementById('restaurantPage').style.display = 'none';
 }
 
-function showRestaurantPage() {
+function showEditor() {
     document.getElementById('loginForm').style.display = 'none';
     document.getElementById('registerForm').style.display = 'none';
+    document.getElementById('loader').style.display = 'none';
     document.getElementById('restaurantPage').style.display = 'block';
 }
 
@@ -38,6 +48,7 @@ async function register(event) {
     event.stopImmediatePropagation();
     event.cancelBubble = true;
     event.returnValue = false;
+    showLoader();
     const name = document.querySelector('#registerForm .input-name').value;
     const email = document.querySelector('#registerForm .input-email').value;
     const password = document.querySelector('#registerForm .input-password').value;
@@ -64,10 +75,10 @@ async function register(event) {
             id_ = data.id;
             name_ = name;
             localStorage.setItem('token', data.token);
-            showRestaurantPage();
             await loadData();
         } else {
             alert(await response.text());
+            showRegisterForm();
         }
     } catch (error) {
         console.error(error);
@@ -81,6 +92,7 @@ async function login(event) {
     event.stopImmediatePropagation();
     event.cancelBubble = true;
     event.returnValue = false;
+    showLoader()
     const email = document.querySelector('#loginForm .input-email').value;
     const password = document.querySelector('#loginForm .input-password').value;
     try {
@@ -93,9 +105,10 @@ async function login(event) {
             id_ = data.id;
             name_ = data.name;
             localStorage.setItem('token', data.token);
-            showRestaurantPage();
-            await loadData();
+            await loadData(showEditor);
         } else {
+            showLoginForm();
+            await new Promise(resolve => setTimeout(resolve, 1));
             alert(await response.text());
         }
     } catch (error) {
@@ -117,7 +130,7 @@ function logout() {
     location.reload();
 }
 
-async function loadData() {
+async function loadData(callback) {
     const token = localStorage.getItem('token');
     try {
         const response = await fetch(`${API}/?token=${encodeURIComponent(token)}`);
@@ -128,6 +141,7 @@ async function loadData() {
             document.getElementById('restaurantName').innerHTML = `Menu of <a href="${DOMAIN}/sites/${data.id}/index.html" target="_blank">${data.name}</a>`;
             document.getElementById('qrCode').src = `${DOMAIN}/sites/${data.id}/qr.png`;
             populateMenuTable(data.data);
+            showEditor();
         } else if (response.status === 401) {
             alert('Session expired');
             this.logout()
