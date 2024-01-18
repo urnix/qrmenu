@@ -145,16 +145,28 @@ table {
 }
 
 .delete-button, .up-button, .down-button {
-    width: 70px;
-    margin-right: 10px;
+    width: 50px;
+    margin-right: 0;
     margin-bottom: 10px;
+    background-color: transparent;
     border: none;
+    font-size: 28px;
+    padding: 0;
+}
+
+.delete-button:hover, .up-button:hover, .down-button:hover {
+    /*background-color: grey;*/
+    transform: scale(1.5);
+
 }
 
 .delete-button[disabled], .up-button[disabled], .down-button[disabled] {
-    background-color: grey;
+    /*background-color: grey;*/
+    opacity: .5;
     cursor: not-allowed;
-    color: white;
+    transform: none !important;
+
+
 }
 
 #menuTableBody td:last-child {
@@ -201,6 +213,7 @@ table {
         display: inline-block !important;
         padding: 0 10px;
     }
+
     td > * {
         width: 90%;
     }

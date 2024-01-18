@@ -54,9 +54,8 @@ function createDishCard(dish) {
     <div class="dish-card">
       <img src="${dish.imgUrl || `${settings.DOMAIN}/imgs/dish_placeholder.png`}" alt="${dish.name}">
       <div class="content">
-        <h3>${dish.name}</h3>
-        <p>${dish.description}</p>
-        <p>${dish.category}</p>
+        <p>${dish.name.length > 80 ? dish.name.substring(0, 80) + '...' : dish.name}</p>
+        <p>${dish.description.length > 100 ? dish.description.substring(0, 100) + '...' : dish.description}</p>
         <p>${dish.price} TL</p>
       </div>
     </div>
@@ -225,6 +224,7 @@ function saveDataAndPage(id, data) {
     for (const category of categories) {
         categoriesHtml += `<a href="#${category.toLowerCase()}">${category}</a>`
     }
+    data = categories.reduce((a, c) => [...a, ...(data.filter(dish => dish.category === c))], [])
     for (let i = 0; i < data.length; i++) {
         if (i > 0 && data[i].category !== data[i - 1].category) {
             menu += '<div class="dish-card dish-card-filler"></div><div class="dish-card dish-card-filler"></div><div class="dish-card dish-card-filler"></div>';
@@ -367,7 +367,7 @@ app.post('/upload/:userId/:dishId', upload.single('image'), function (req, res) 
         dish = {...dish, imgUrl};
         data = [...data.slice(0, dishIndex), dish, ...data.slice(dishIndex + 1)];
         saveDataAndPage(decoded.id, data);
-        return res.status(200).json({token: prolongToken(decoded)});
+        return res.status(200).json({token: prolongToken(decoded), imgUrl});
     } catch (error) {
         console.error(error);
         return res.status(500).send('Server error');

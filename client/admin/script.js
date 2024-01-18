@@ -5,7 +5,7 @@ const DOMAIN = isLocal ? 'file:///Users/fen1x/dev/my/menu/client' : 'https://men
 let userId = '';
 let name_ = '';
 let updateInProcess = false;
-let dishesCount = 0;
+let dishes = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (localStorage.getItem('token')) {
@@ -138,12 +138,12 @@ async function loadData(dishId, fieldName) {
         const response = await fetch(`${API}/?token=${encodeURIComponent(token)}`);
         if (response.ok) {
             const data = await response.json();
-            dishesCount = data.data.length;
+            dishes = data.data;
             userId = data.id;
             name = data.name;
             document.getElementById('restaurantName').innerHTML = `Menu of <a href="${DOMAIN}/sites/${data.id}/index.html" target="_blank">${data.name}</a>`;
             document.getElementById('qrCode').src = `${DOMAIN}/sites/${data.id}/qr.png`;
-            populateMenuTable(data.data, dishId, fieldName);
+            populateMenuTable(dishId, fieldName);
             showEditor();
         } else if (response.status === 401) {
             toastFail('Session expired');
@@ -161,7 +161,7 @@ async function loadData(dishId, fieldName) {
 function renderTextCell(htmlTableCellElement, dishId, fieldName, placeholder, value, update = false) {
     if (update) {
         let existingInput = htmlTableCellElement.querySelector('input');
-        existingInput.value = value;
+        // existingInput.value = value;
         existingInput.disabled = false;
         return;
     }
@@ -170,16 +170,16 @@ function renderTextCell(htmlTableCellElement, dishId, fieldName, placeholder, va
     input.placeholder = placeholder;
     input.value = value;
     input.addEventListener('change', async () => {
-        const t = setInterval(async () => {
-            if (updateInProcess) {
-                return;
-            }
-            updateInProcess = true;
-            input.disabled = true;
-            await updateDish(dishId, fieldName, input.value);
-            clearInterval(t);
-            updateInProcess = false;
-        }, 100);
+        // const t = setInterval(async () => {
+        //     if (updateInProcess) {
+        //         return;
+        //     }
+        // updateInProcess = true;
+        // input.disabled = true;
+        await updateDish(dishId, fieldName, input.value);
+        // clearInterval(t);
+        // updateInProcess = false;
+        // }, 100);
     });
     htmlTableCellElement.appendChild(input);
 }
@@ -189,6 +189,11 @@ function renderImgCell(htmlTableCellElement, dishId, fieldName, placeholder, val
         let existingImg = htmlTableCellElement.querySelector('img');
         existingImg.src = value || `${DOMAIN}/imgs/dish_placeholder.png`;
         existingImg.disabled = false;
+        if (value === '../imgs/loader.svg') {
+            existingImg.style.width = '33px';
+        } else {
+            existingImg.style.width = null;
+        }
         return;
     }
     const input = document.createElement('input');
@@ -212,14 +217,14 @@ function renderDelCell(htmlTableCellElement, dishId, order, index, length) {
     const button = document.createElement('button');
     button.id = `delete-button-${dishId}`;
     button.className = 'delete-button';
-    button.textContent = 'Delete';
+    button.textContent = '🗑️';
     button.addEventListener('click', async () => await deleteDish(dishId));
     htmlTableCellElement.appendChild(button);
 
     const upButton = document.createElement('button');
     upButton.id = `up-button-${dishId}`;
     upButton.className = 'up-button';
-    upButton.textContent = 'Up';
+    upButton.textContent = '⬆️';
     if (index === 0) {
         upButton.disabled = true;
     }
@@ -233,7 +238,7 @@ function renderDelCell(htmlTableCellElement, dishId, order, index, length) {
     const downButton = document.createElement('button');
     downButton.id = `down-button-${dishId}`;
     downButton.className = 'down-button';
-    downButton.textContent = 'Down';
+    downButton.textContent = '⬇️';
     if (index === length - 1) {
         downButton.disabled = true;
     }
@@ -245,7 +250,7 @@ function renderDelCell(htmlTableCellElement, dishId, order, index, length) {
     htmlTableCellElement.appendChild(downButton);
 }
 
-function populateMenuTable(dishes, dishId, fieldName) {
+function populateMenuTable(dishId, fieldName) {
     const table = document.getElementById('menuTable').getElementsByTagName('tbody')[0];
     if (!dishId) {
         table.innerHTML = '';
@@ -295,21 +300,21 @@ function populateMenuTable(dishes, dishId, fieldName) {
             }
         }
     });
-    let isOrderChanged = false;
-    for (let i = 0; i < dishes.length; i++) {
-        if (dishes[i].order !== i + 1) {
-            isOrderChanged = true;
-            break;
-        }
-    }
+}
 
-    console.log(`isOrderChanged: ${JSON.stringify(isOrderChanged)}`);
-
-    // TODO: how to detect order change?
-
+function orderChanged() {
+    // let isOrderChanged = false;
+    // for (let i = 0; i < dishes.length; i++) {
+    //     if (dishes[i].order !== i + 1) {
+    //         isOrderChanged = true;
+    //         break;
+    //     }
+    // }
+    // console.log(`isOrderChanged: ${JSON.stringify(isOrderChanged)}`);
     // if (!isOrderChanged) {
     //     return;
     // }
+    const table = document.getElementById('menuTable').getElementsByTagName('tbody')[0];
     let rows = [...Array.from(table.rows)];
     table.innerHTML = '';
     dishes.sort((a, b) => a.order - b.order);
@@ -321,9 +326,18 @@ function populateMenuTable(dishes, dishId, fieldName) {
     }
 }
 
+function changeField(dishId, fieldName, value) {
+    let dishIndex = dishes.findIndex(d => d.id === dishId);
+    let dish = dishes[dishIndex];
+    dish = {...dish, [fieldName]: value};
+    dishes = [...dishes.slice(0, dishIndex), dish, ...dishes.slice(dishIndex + 1)];
+}
+
 async function uploadImage(input, dishId) {
     const formData = new FormData();
     formData.append('image', input.files[0]);
+    changeField(dishId, 'imgUrl', '../imgs/loader.svg');
+    populateMenuTable(dishId, 'imgUrl');
     try {
         const response = await fetch(`${API}/upload/${userId}/${dishId}/?token=${encodeURIComponent(localStorage.getItem('token'))}`, {
                 method: 'POST',
@@ -331,8 +345,10 @@ async function uploadImage(input, dishId) {
             }
         );
         if (response.ok) {
-            await loadData(dishId, 'imgUrl');
-            toastSuccess('Image updated');
+            const data = await response.json();
+            changeField(dishId, 'imgUrl', data.imgUrl);
+            populateMenuTable(dishId, 'imgUrl');
+            // toastSuccess('Image updated');
         } else if (response.status === 401) {
             toastFail('Session expired');
             this.logout()
@@ -353,7 +369,7 @@ async function addDish() {
     let addButton = document.getElementById('add-dish-button');
     try {
         addButton.disabled = true;
-        const dish = {name: '', description: '', category: '', price: '', imgUrl: '', order: dishesCount + 1};
+        const dish = {name: '', description: '', category: '', price: '', imgUrl: '', order: dishes.length + 1};
         const response = await fetch(`${API}/dishes/?token=${encodeURIComponent(localStorage.getItem('token'))}`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -362,8 +378,8 @@ async function addDish() {
         );
         if (response.ok) {
             const data = await response.json();
-            await loadData(data.id);
-            toastSuccess(`Dish added`);
+            populateMenuTable(data.id);
+            // toastSuccess(`Dish added`);
         } else if (response.status === 401) {
             toastFail('Session expired');
             this.logout()
@@ -386,8 +402,18 @@ async function updateDish(dishId, fieldName, value) {
             }
         );
         if (response.ok) {
-            await loadData(dishId, fieldName);
-            toastSuccess(`${capitalize(fieldName)} updated`);
+            if (fieldName === 'order') {
+                console.log(`dishes1: ${JSON.stringify(dishes)}`);
+                let a = dishes.find(dish => dish.id === dishId);
+                let v = dishes.find(dish => dish.order === value);
+                changeField(v.id, fieldName, a.order);
+                changeField(dishId, fieldName, value);
+                console.log(`dishes2: ${JSON.stringify(dishes)}`);
+                orderChanged();
+            } else {
+                populateMenuTable(dishId, fieldName);
+            }
+            // toastSuccess(`${capitalize(fieldName)} updated`);
         } else if (response.status === 401) {
             toastFail('Session expired');
             this.logout()
@@ -416,8 +442,10 @@ async function deleteDish(dishId) {
             }
         );
         if (response.ok) {
-            await loadData(dishId);
-            toastSuccess(`Dish deleted`);
+            let dishIndex = dishes.findIndex(d => d.id === dishId);
+            dishes = [...dishes.slice(0, dishIndex), ...dishes.slice(dishIndex + 1)];
+            populateMenuTable(dishId);
+            // toastSuccess(`Dish deleted`);
         } else if (response.status === 401) {
             toastFail('Session expired');
             this.logout()
