@@ -8,12 +8,9 @@
 api/node_modules/
 
 # Settings
-api/settings.json
+api/settings.*.json
 
 # Artifacts
 api/data/credentials.txt
-api/settings.*.json
-sites/
-api/sites/
-client/sites/
-examples/
+api/data/sites/*
+client/sites/*

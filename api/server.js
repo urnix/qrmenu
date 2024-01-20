@@ -22,7 +22,9 @@ const credentialsPath = './data/credentials.txt';
 const isLocal = __dirname.includes('Users/');
 const settingsPath = `./settings.${isLocal ? 'local' : 'prod'}.json`;
 const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
-const sitesDir = path.join(__dirname, 'sites');
+const clientSitesPrefix = 'sites';
+const sitesDirLocal = 'data/sites';
+const sitesDir = path.join(__dirname, sitesDirLocal);
 
 const app = express();
 app.use(express.json());
@@ -75,7 +77,7 @@ function prolongToken(decoded) {
 
 async function generateQRCode(id) {
     return new Promise((resolve, reject) => {
-        QRCode.toFile(`${sitesDir}/${id}/qr.png`, settings.DOMAIN + `/sites/` + id, {
+        QRCode.toFile(`${sitesDir}/${id}/qr.png`, `${settings.DOMAIN}/${clientSitesPrefix}/${id}`, {
             color: {
                 dark: '#000',
                 light: '#FFF'
@@ -257,7 +259,7 @@ function saveDataAndPage(id, data) {
         throw new Error('Failed to create page');
     }
     if (isLocal) {
-        recCopy(`sites/${id}`, `../client/sites/${id}`);
+        recCopy(`${sitesDirLocal}/${id}`, `../client/sites/${id}`);
     }
 }
 
@@ -425,7 +427,7 @@ app.post('/upload/:userId/:dishId', upload.single('image'), async function (req,
         await compressImage(filePath, coPath1, 50);
 
 
-        const imgUrl = `${settings.DOMAIN}/sites/${req.params.userId}/imgs/${coPath}`;
+        const imgUrl = `${settings.DOMAIN}/${clientSitesPrefix}/${req.params.userId}/imgs/${coPath}`;
         let data = loadData(decoded.id);
         let dishId = parseInt(req.params.dishId);
         let dishIndex = data.findIndex(dish => dish.id === dishId);
