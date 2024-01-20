@@ -310,7 +310,6 @@ function orderChanged() {
     //         break;
     //     }
     // }
-    // console.log(`isOrderChanged: ${JSON.stringify(isOrderChanged)}`);
     // if (!isOrderChanged) {
     //     return;
     // }
@@ -378,7 +377,9 @@ async function addDish() {
         );
         if (response.ok) {
             const data = await response.json();
+            dishes = [...dishes, {...dish, id: data.id}];
             populateMenuTable(data.id);
+            setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 1);
             // toastSuccess(`Dish added`);
         } else if (response.status === 401) {
             toastFail('Session expired');
@@ -403,12 +404,10 @@ async function updateDish(dishId, fieldName, value) {
         );
         if (response.ok) {
             if (fieldName === 'order') {
-                console.log(`dishes1: ${JSON.stringify(dishes)}`);
                 let a = dishes.find(dish => dish.id === dishId);
                 let v = dishes.find(dish => dish.order === value);
                 changeField(v.id, fieldName, a.order);
                 changeField(dishId, fieldName, value);
-                console.log(`dishes2: ${JSON.stringify(dishes)}`);
                 orderChanged();
             } else {
                 populateMenuTable(dishId, fieldName);
