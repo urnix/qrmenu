@@ -141,7 +141,7 @@ async function loadData(dishId, fieldName) {
             dishes = data.data;
             userId = data.id;
             name = data.name;
-            document.getElementById('restaurantName').innerHTML = `Menu of <a href="${DOMAIN}/sites/${data.id}/index.html" target="_blank">${data.name}</a>`;
+            document.getElementById('restaurantName').innerHTML = `Menu of <a href="${DOMAIN}/sites/${data.id}" target="_blank">${data.name}</a>`;
             document.getElementById('qrCode').src = `${DOMAIN}/sites/${data.id}/qr.png`;
             populateMenuTable(dishId, fieldName);
             showEditor();

@@ -1,11 +1,17 @@
 // TODO: fs sync -> async
 
-const express = require('express');
-const jwt = require('jsonwebtoken');
-const fs = require('fs');
-const QRCode = require('qrcode');
-const path = require('path');
-const multer = require('multer');
+import express from "express";
+import jwt from "jsonwebtoken";
+import fs from "fs";
+import QRCode from "qrcode";
+import path from "path";
+import multer from "multer";
+import {fileURLToPath} from 'url';
+import {dirname} from 'path';
+import gm from "gm";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const credentialsPath = './data/credentials.txt';
 /**
@@ -54,7 +60,7 @@ function createDishCard(dish) {
     <div class="dish-card">
       <img src="${dish.imgUrl || `${settings.DOMAIN}/imgs/dish_placeholder.png`}" alt="${dish.name}">
       <div class="content">
-        <p>${dish.name.length > 80 ? dish.name.substring(0, 80) + '...' : dish.name}</p>
+        <h3>${dish.name.length > 80 ? dish.name.substring(0, 80) + '...' : dish.name}</h3>
         <p>${dish.description.length > 100 ? dish.description.substring(0, 100) + '...' : dish.description}</p>
         <p>${dish.price} TL</p>
       </div>
@@ -347,7 +353,42 @@ const storage = multer.diskStorage({
 });
 const upload = multer({storage: storage});
 
-app.post('/upload/:userId/:dishId', upload.single('image'), function (req, res) {
+function compressInner(inputPath, outputPath, quality, percent) {
+    new Promise((resolve, reject) => {
+        gm(inputPath)
+            .resize(percent + '%')
+            .noProfile()
+            .setFormat('webp')
+            .quality(quality)
+            .write(outputPath, function (error) {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve();
+                }
+            });
+    });
+}
+
+let goodSize = 50000;
+let goodQuality = 50;
+
+// async function compressAllImages(req, compressImage) {
+//     const userDir = path.join(sitesDir, userId);
+//     const imgsDir = path.join(userDir, 'imgs');
+//     const imgs = fs.readdirSync(imgsDir);
+//     for (const img of imgs) {
+//         if (img.endsWith('.webp')) {
+//             continue;
+//         }
+//         const imgPath = path.join(imgsDir, img);
+//         let oldImgPath = imgPath.replace(path.extname(imgPath), '_old' + path.extname(imgPath));
+//         fs.copyFileSync(imgPath, oldImgPath);
+//         await compressImage(oldImgPath, imgPath);
+//     }
+// }
+
+app.post('/upload/:userId/:dishId', upload.single('image'), async function (req, res) {
     let decoded;
     try {
         const {token} = req.query;
@@ -356,7 +397,35 @@ app.post('/upload/:userId/:dishId', upload.single('image'), function (req, res) 
         return res.status(401).send('Session expired');
     }
     try {
-        const imgUrl = `${settings.DOMAIN}/sites/${req.params.userId}/imgs/${req.file.filename}`;
+
+        const filePath = path.join(sitesDir, req.params.userId, 'imgs') + '/' + req.file.filename;
+
+        async function compressImage(inputPath, outputPath) {
+            try {
+                let quality = 100;
+                let percent = 100;
+                let size;
+
+                while (!size || size > goodSize && quality > goodQuality && percent > 0) {
+                    await compressInner(inputPath, outputPath, quality, percent);
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    size = fs.statSync(outputPath).size;
+                    // quality -= 5;
+                    percent /= 2;
+                    console.log(`quality: ${quality}, percent: ${percent}%, size: ${size / 1000} kb`);
+                }
+                console.log(`Image compressed finished with ${quality}% quality, percent: ${percent}%, size: ${size / 1000} kb`);
+            } catch (error) {
+                console.error('Error compressing image:', error);
+            }
+        }
+
+        let coPath1 = filePath.replace(path.extname(filePath), '_compressed' + path.extname(filePath) + '.webp');
+        let coPath = req.file.filename.replace(path.extname(req.file.filename), '_compressed' + path.extname(req.file.filename) + '.webp');
+        await compressImage(filePath, coPath1, 50);
+
+
+        const imgUrl = `${settings.DOMAIN}/sites/${req.params.userId}/imgs/${coPath}`;
         let data = loadData(decoded.id);
         let dishId = parseInt(req.params.dishId);
         let dishIndex = data.findIndex(dish => dish.id === dishId);
