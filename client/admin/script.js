@@ -138,6 +138,7 @@ async function loadData() {
         if (response.ok) {
             const data = await response.json();
             dishes = data.data;
+            dishes.sort((a, b) => a.category.localeCompare(b.category) || a.order - b.order);
             userId = data.id;
             name = data.name;
             document.getElementById('restaurantName').innerHTML = `Welcome, ${data.name}`;
@@ -219,7 +220,7 @@ function drawButtonsField(card, dishId, order, index) {
         document.querySelectorAll('.down-deleteButton').forEach(b => b.disabled = true);
         await updateDish(dishId, 'order', order - 1);
     });
-    buttonsDiv.appendChild(upButton);
+    // buttonsDiv.appendChild(upButton);
 
     const downButton = document.createElement('button');
     downButton.id = `down-button-${dishId}`;
@@ -233,7 +234,7 @@ function drawButtonsField(card, dishId, order, index) {
         document.querySelectorAll('.down-deleteButton').forEach(b => b.disabled = true);
         await updateDish(dishId, 'order', order + 1);
     });
-    buttonsDiv.appendChild(downButton);
+    // buttonsDiv.appendChild(downButton);
     card.appendChild(buttonsDiv);
 }
 
@@ -369,6 +370,11 @@ async function updateDish(dishId, fieldName, value) {
             if (fieldName === 'order') {
                 await loadData();
             }
+            if (fieldName === 'category') {
+                await loadData();
+                window.location.hash = `#${value}`;
+                toastSuccess('Dish moved to another category');
+            }
         } else if (response.status === 401) {
             toastFail('Session expired');
             this.logout()
@@ -438,6 +444,11 @@ const ToastType = {
     Danger: "#eb3b5a",
     Warning: "#fdcb6e",
     Success: "#00b894",
+}
+
+
+function toastSuccess(message) {
+    new Toast(message, ToastType.Success, 30000);
 }
 
 function toastFail(message) {
