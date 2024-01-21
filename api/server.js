@@ -34,10 +34,6 @@ app.use((req, res, next) => {
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     next();
 });
-// app.use('/:login', (req, res, next) => {
-//     const userDir = path.join(sitesDir, req.params.login);
-//     express.static(userDir)(req, res, next);
-// });
 
 function recCopy(s, s2) {
     const stat = fs.statSync(s);
@@ -274,7 +270,8 @@ app.post('/dishes/', (req, res) => {
     try {
         let data = loadData(decoded.id);
         const id = Math.max(...data.map(dish => dish.id)) + 1;
-        const dish = {...req.body, id};
+        const order = Math.max(...data.map(dish => dish.order)) + 1
+        const dish = {id, name: '', description: '', price: '', category: 'Other', order};
         data = [...data, dish];
         saveDataAndPage(decoded.id, data);
         return res.status(200).json({token: prolongToken(decoded), id});
@@ -342,6 +339,7 @@ app.delete('/dishes/:id', (req, res) => {
     }
 });
 
+// noinspection JSUnusedGlobalSymbols
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         const uploadPath = path.join(sitesDir, req.params.userId, 'imgs');
@@ -356,7 +354,7 @@ const storage = multer.diskStorage({
 const upload = multer({storage: storage});
 
 function compressInner(inputPath, outputPath, quality, percent) {
-    new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
         gm(inputPath)
             .resize(percent + '%')
             .noProfile()
@@ -402,7 +400,7 @@ app.post('/upload/:userId/:dishId', upload.single('image'), async function (req,
 
         const filePath = path.join(sitesDir, req.params.userId, 'imgs') + '/' + req.file.filename;
 
-        async function compressImage(inputPath, outputPath) {
+        async function compressImage(inputPath, outputPath, id) {
             try {
                 let quality = 100;
                 let percent = 100;
@@ -424,7 +422,8 @@ app.post('/upload/:userId/:dishId', upload.single('image'), async function (req,
 
         let coPath1 = filePath.replace(path.extname(filePath), '_compressed' + path.extname(filePath) + '.webp');
         let coPath = req.file.filename.replace(path.extname(req.file.filename), '_compressed' + path.extname(req.file.filename) + '.webp');
-        await compressImage(filePath, coPath1, 50);
+        // fs.copyFileSync(filePath, coPath1);
+        await compressImage(filePath, coPath1, decoded.id);
 
 
         const imgUrl = `${settings.DOMAIN}/${clientSitesPrefix}/${req.params.userId}/imgs/${coPath}`;

@@ -4,7 +4,6 @@ const DOMAIN = isLocal ? 'file:///Users/fen1x/dev/my/menu/client' : 'https://men
 
 let userId = '';
 let name_ = '';
-let updateInProcess = false;
 let dishes = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -132,7 +131,7 @@ function logout() {
     location.reload();
 }
 
-async function loadData(dishId, fieldName) {
+async function loadData() {
     const token = localStorage.getItem('token');
     try {
         const response = await fetch(`${API}/?token=${encodeURIComponent(token)}`);
@@ -141,9 +140,11 @@ async function loadData(dishId, fieldName) {
             dishes = data.data;
             userId = data.id;
             name = data.name;
-            document.getElementById('restaurantName').innerHTML = `Menu of <a href="${DOMAIN}/sites/${data.id}" target="_blank">${data.name}</a>`;
+            document.getElementById('restaurantName').innerHTML = `Welcome, ${data.name}`;
+            document.getElementById('menuLink').href =`${DOMAIN}/sites/${data.id}`;
+            document.getElementById('menuLink').text = `${DOMAIN}/sites/${data.id}`;
             document.getElementById('qrCode').src = `${DOMAIN}/sites/${data.id}/qr.png`;
-            populateMenuTable(dishId, fieldName);
+            drawCards();
             showEditor();
         } else if (response.status === 401) {
             toastFail('Session expired');
@@ -158,171 +159,138 @@ async function loadData(dishId, fieldName) {
     }
 }
 
-function renderTextCell(htmlTableCellElement, dishId, fieldName, placeholder, value, update = false) {
-    if (update) {
-        let existingInput = htmlTableCellElement.querySelector('input');
-        // existingInput.value = value;
-        existingInput.disabled = false;
-        return;
+function drawTextField(card, dishId, fieldName, placeholder, value) {
+    if (['name', 'description', 'category', 'price'].includes(fieldName)) {
+        let input;
+        if (['name'].includes(fieldName)) {
+            input = document.createElement('input');
+        } else {
+            input = document.createElement('input');
+        }
+        input.type = 'text';
+        input.placeholder = placeholder;
+        input.value = value;
+        input.addEventListener('change', async () => await updateDish(dishId, fieldName, input.value));
+        card.appendChild(input);
     }
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.placeholder = placeholder;
-    input.value = value;
-    input.addEventListener('change', async () => {
-        // const t = setInterval(async () => {
-        //     if (updateInProcess) {
-        //         return;
-        //     }
-        // updateInProcess = true;
-        // input.disabled = true;
-        await updateDish(dishId, fieldName, input.value);
-        // clearInterval(t);
-        // updateInProcess = false;
-        // }, 100);
-    });
-    htmlTableCellElement.appendChild(input);
 }
 
-function renderImgCell(htmlTableCellElement, dishId, fieldName, placeholder, value, update = false) {
-    if (update) {
-        let existingImg = htmlTableCellElement.querySelector('img');
-        existingImg.src = value || `${DOMAIN}/imgs/dish_placeholder.png`;
-        existingImg.disabled = false;
-        if (value === '../imgs/loader.svg') {
-            existingImg.style.width = '33px';
-        } else {
-            existingImg.style.width = null;
-        }
-        return;
-    }
+function drawImageField(card, dishId, fieldName, placeholder, value) {
     const input = document.createElement('input');
     input.id = `fileInput${dishId}`;
     input.className = 'hidden';
     input.type = 'file';
     input.placeholder = placeholder;
     input.addEventListener('change', async () => await uploadImage(input, dishId));
-    htmlTableCellElement.appendChild(input);
+    card.appendChild(input);
     const img = document.createElement('img');
-    img.className = 'dishImage';
+    img.id = `dish-image-${dishId}`;
+    img.className = 'dish-image';
     img.src = value || `${DOMAIN}/imgs/dish_placeholder.png`;
     img.alt = placeholder;
     img.onclick = () => input.click();
-    htmlTableCellElement.appendChild(img);
+    card.appendChild(img);
 }
 
-function renderDelCell(htmlTableCellElement, dishId, order, index, length) {
-    htmlTableCellElement.innerHTML = '';
+function redrawImageField(dishId, value) {
+    document.getElementById(`dish-image-${dishId}`).src = value;
+}
 
-    const button = document.createElement('button');
-    button.id = `delete-button-${dishId}`;
-    button.className = 'delete-button';
-    button.textContent = '🗑️';
-    button.addEventListener('click', async () => await deleteDish(dishId));
-    htmlTableCellElement.appendChild(button);
+function drawButtonsField(card, dishId, order, index) {
+    const buttonsDiv = document.createElement('div');
+    buttonsDiv.className = 'buttons';
+
+    const deleteButton = document.createElement('button');
+    deleteButton.id = `delete-button-${dishId}`;
+    deleteButton.className = 'delete-deleteButton';
+    deleteButton.textContent = '🗑️';
+    deleteButton.addEventListener('click', async () => await deleteDish(dishId));
+    buttonsDiv.appendChild(deleteButton);
 
     const upButton = document.createElement('button');
     upButton.id = `up-button-${dishId}`;
-    upButton.className = 'up-button';
+    upButton.className = 'up-deleteButton';
     upButton.textContent = '⬆️';
     if (index === 0) {
         upButton.disabled = true;
     }
     upButton.addEventListener('click', async () => {
-        document.querySelectorAll('.up-button').forEach(b => b.disabled = true);
-        document.querySelectorAll('.down-button').forEach(b => b.disabled = true);
+        document.querySelectorAll('.up-deleteButton').forEach(b => b.disabled = true);
+        document.querySelectorAll('.down-deleteButton').forEach(b => b.disabled = true);
         await updateDish(dishId, 'order', order - 1);
     });
-    htmlTableCellElement.appendChild(upButton);
+    buttonsDiv.appendChild(upButton);
 
     const downButton = document.createElement('button');
     downButton.id = `down-button-${dishId}`;
-    downButton.className = 'down-button';
+    downButton.className = 'down-deleteButton';
     downButton.textContent = '⬇️';
-    if (index === length - 1) {
+    if (index === dishes.length - 1) {
         downButton.disabled = true;
     }
     downButton.addEventListener('click', async () => {
-        document.querySelectorAll('.up-button').forEach((b, i) => true);
-        document.querySelectorAll('.down-button').forEach((b, i) => true);
+        document.querySelectorAll('.up-deleteButton').forEach(b => b.disabled = true);
+        document.querySelectorAll('.down-deleteButton').forEach(b => b.disabled = true);
         await updateDish(dishId, 'order', order + 1);
     });
-    htmlTableCellElement.appendChild(downButton);
+    buttonsDiv.appendChild(downButton);
+    card.appendChild(buttonsDiv);
 }
 
-function populateMenuTable(dishId, fieldName) {
-    const table = document.getElementById('menuTable').getElementsByTagName('tbody')[0];
-    if (!dishId) {
-        table.innerHTML = '';
-    }
-    if (dishId && !fieldName) {
-        const row = table.insertRow();
-        row.id = `dish-row-${dishId}`;
-        let dish1 = dishes.find(d => d.id === dishId);
-        if (dish1) {
-            const index = dishes.indexOf(dish1);
-            renderTextCell(row.insertCell(0), dishId, 'name', 'Dish Name', dish1.name);
-            renderTextCell(row.insertCell(1), dishId, 'description', 'Description', dish1.description);
-            renderTextCell(row.insertCell(2), dishId, 'category', 'Category', dish1.category);
-            renderTextCell(row.insertCell(3), dishId, 'price', 'Price', dish1.price);
-            renderImgCell(row.insertCell(4), dishId, 'imgUrl', 'Image', dish1.imgUrl);
-            renderDelCell(row.insertCell(5), dishId, dish1.order, index, dishes.length);
-        } else {
-            document.getElementById(`dish-row-${dishId}`).remove();
-        }
-    }
+function drawCards() {
+    const cardsContainer = document.getElementById('menu');
+    cardsContainer.innerHTML = '';
+    let categoryContainer, countInCategory;
     dishes.forEach((dish, index) => {
-        if (!dishId) {
-            const row = table.insertRow();
-            row.id = `dish-row-${dish.id}`;
-            renderTextCell(row.insertCell(0), dish.id, 'name', 'Dish Name', dish.name);
-            renderTextCell(row.insertCell(1), dish.id, 'description', 'Description', dish.description);
-            renderTextCell(row.insertCell(2), dish.id, 'category', 'Category', dish.category);
-            renderTextCell(row.insertCell(3), dish.id, 'price', 'Price', dish.price);
-            renderImgCell(row.insertCell(4), dish.id, 'imgUrl', 'Image', dish.imgUrl);
-            renderDelCell(row.insertCell(5), dish.id, dish.order, index, dishes.length);
-        } else if (dish.id === dishId) {
-            const row = document.getElementById(`dish-row-${dishId}`);
-            if (fieldName === 'name') {
-                renderTextCell(row.cells[0], dish.id, 'name', 'Dish Name', dish.name, true);
+        // Category
+        if (!index || dishes[index - 1].category !== dish.category) {
+            // Category Label
+            let categoryLabel = document.createElement('h1');
+            categoryLabel.className = 'category-label';
+            categoryLabel.id = dish.category;
+            categoryLabel.textContent = dish.category;
+            cardsContainer.appendChild(categoryLabel);
+
+            countInCategory = 0;
+            categoryContainer = document.createElement('div');
+            categoryContainer.className = 'category-container';
+        }
+
+        // Card
+        let cardDiv = document.createElement('div');
+        cardDiv.id = `dish-card-${dish.id}`;
+        cardDiv.className = `dish-card`;
+        countInCategory++;
+
+        // Image
+        drawImageField(cardDiv, dish.id, 'imgUrl', 'Image', dish.imgUrl);
+
+        // Content
+        let contentDiv = document.createElement('div');
+        contentDiv.className = 'content';
+        drawTextField(contentDiv, dish.id, 'name', 'Dish Name', dish.name);
+        drawTextField(contentDiv, dish.id, 'description', 'Description', dish.description);
+        drawTextField(contentDiv, dish.id, 'category', 'Category', dish.category);
+        drawTextField(contentDiv, dish.id, 'price', 'Price', dish.price);
+        drawButtonsField(contentDiv, dish.id, dish.order, index);
+        cardDiv.appendChild(contentDiv);
+
+        // Card
+        categoryContainer.appendChild(cardDiv);
+
+        // Category
+        if (index === dishes.length - 1 || dish.category !== dishes[index + 1].category) {
+            // Fillers
+            let fillersCount = countInCategory % 12 ? 12 - (countInCategory % 12) : 0;
+            for (let i = 0; i < fillersCount; i++) {
+                let cardFillerDiv = document.createElement('div');
+                cardFillerDiv.className = 'dish-card dish-card-filler';
+                categoryContainer.appendChild(cardFillerDiv);
             }
-            if (fieldName === 'description') {
-                renderTextCell(row.cells[1], dish.id, 'description', 'Description', dish.description, true);
-            }
-            if (fieldName === 'category') {
-                renderTextCell(row.cells[2], dish.id, 'category', 'Category', dish.category, true);
-            }
-            if (fieldName === 'price') {
-                renderTextCell(row.cells[3], dish.id, 'price', 'Price', dish.price, true);
-            }
-            if (fieldName === 'imgUrl') {
-                renderImgCell(row.cells[4], dish.id, 'imgUrl', 'Image', dish.imgUrl, true);
-            }
+            // Category
+            cardsContainer.appendChild(categoryContainer);
         }
     });
-}
-
-function orderChanged() {
-    // let isOrderChanged = false;
-    // for (let i = 0; i < dishes.length; i++) {
-    //     if (dishes[i].order !== i + 1) {
-    //         isOrderChanged = true;
-    //         break;
-    //     }
-    // }
-    // if (!isOrderChanged) {
-    //     return;
-    // }
-    const table = document.getElementById('menuTable').getElementsByTagName('tbody')[0];
-    let rows = [...Array.from(table.rows)];
-    table.innerHTML = '';
-    dishes.sort((a, b) => a.order - b.order);
-    for (let i = 0; i < dishes.length; i++) {
-        let id = dishes[i].id;
-        let row = rows.find(r => r.id === `dish-row-${id}`);
-        table.appendChild(row);
-        renderDelCell(row.cells[5], id, dishes[i].order, i, dishes.length);
-    }
 }
 
 function changeField(dishId, fieldName, value) {
@@ -336,7 +304,7 @@ async function uploadImage(input, dishId) {
     const formData = new FormData();
     formData.append('image', input.files[0]);
     changeField(dishId, 'imgUrl', '../imgs/loader.svg');
-    populateMenuTable(dishId, 'imgUrl');
+    redrawImageField(dishId, '../imgs/loader.svg');
     try {
         const response = await fetch(`${API}/upload/${userId}/${dishId}/?token=${encodeURIComponent(localStorage.getItem('token'))}`, {
                 method: 'POST',
@@ -344,10 +312,10 @@ async function uploadImage(input, dishId) {
             }
         );
         if (response.ok) {
+            // await new Promise(r => setTimeout(r, 3000)); // TODO
             const data = await response.json();
             changeField(dishId, 'imgUrl', data.imgUrl);
-            populateMenuTable(dishId, 'imgUrl');
-            // toastSuccess('Image updated');
+            redrawImageField(dishId, data.imgUrl);
         } else if (response.status === 401) {
             toastFail('Session expired');
             this.logout()
@@ -363,24 +331,18 @@ function capitalize(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
-
 async function addDish() {
     let addButton = document.getElementById('add-dish-button');
     try {
         addButton.disabled = true;
-        const dish = {name: '', description: '', category: '', price: '', imgUrl: '', order: dishes.length + 1};
         const response = await fetch(`${API}/dishes/?token=${encodeURIComponent(localStorage.getItem('token'))}`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(dish)
             }
         );
         if (response.ok) {
-            const data = await response.json();
-            dishes = [...dishes, {...dish, id: data.id}];
-            populateMenuTable(data.id);
+            await loadData();
             setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 1);
-            // toastSuccess(`Dish added`);
         } else if (response.status === 401) {
             toastFail('Session expired');
             this.logout()
@@ -388,6 +350,7 @@ async function addDish() {
             toastFail('Failed to add dish');
         }
     } catch (error) {
+        console.error(error);
         toastFail('Error adding dish');
     } finally {
         addButton.disabled = false;
@@ -404,15 +367,8 @@ async function updateDish(dishId, fieldName, value) {
         );
         if (response.ok) {
             if (fieldName === 'order') {
-                let a = dishes.find(dish => dish.id === dishId);
-                let v = dishes.find(dish => dish.order === value);
-                changeField(v.id, fieldName, a.order);
-                changeField(dishId, fieldName, value);
-                orderChanged();
-            } else {
-                populateMenuTable(dishId, fieldName);
+                await loadData();
             }
-            // toastSuccess(`${capitalize(fieldName)} updated`);
         } else if (response.status === 401) {
             toastFail('Session expired');
             this.logout()
@@ -443,8 +399,7 @@ async function deleteDish(dishId) {
         if (response.ok) {
             let dishIndex = dishes.findIndex(d => d.id === dishId);
             dishes = [...dishes.slice(0, dishIndex), ...dishes.slice(dishIndex + 1)];
-            populateMenuTable(dishId);
-            // toastSuccess(`Dish deleted`);
+            document.getElementById(`dish-card-${dishId}`).remove();
         } else if (response.status === 401) {
             toastFail('Session expired');
             this.logout()
@@ -485,10 +440,6 @@ const ToastType = {
     Success: "#00b894",
 }
 
-function toastSuccess(message) {
-    new Toast(message, ToastType.Success, 3000);
-}
-
 function toastFail(message) {
-    new Toast(message, ToastType.Danger, 3000);
+    new Toast(message, ToastType.Danger, 30000);
 }

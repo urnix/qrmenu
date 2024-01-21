@@ -1,29 +1,25 @@
+/*--- CUSTOMER ---*/
+
+/* MAIN ELEMENTS: begin */
+
 body {
-    font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    background-color: #f4f4f4;
+    font-family: Arial, sans-serif;
 }
 
-#restaurantPage {
-    height: 100vh;
-    width: 100%;
-}
-
-#registerForm, #loginForm {
-    background-color: #fff;
+header {
+    background-color: #000;
+    color: #fff;
+    text-align: center;
     padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    width: 80%;
-    max-width: 400px;
 }
 
-#registerForm input, #loginForm input {
+/* MAIN ELEMENTS: end */
+
+/* COMMON ELEMENTS: begin */
+
+input {
     width: 100%;
     margin-bottom: 15px;
     padding: 10px;
@@ -42,72 +38,41 @@ button {
     border: 1px solid black;
 }
 
-#registerForm button, #loginForm button {
-    width: 100%;
-    padding: 10px;
-    background-color: black;
-    color: white;
-    border-radius: 5px;
-    cursor: pointer;
-    border: 1px solid black;
-}
-
-
-#registerForm button:hover, #loginForm button:hover {
+button:hover {
     background-color: white;
     color: black;
-}
-
-table {
-    /*width: 100%;*/
-    border-collapse: collapse;
-    /*background-color: white;*/
-}
-
-.hidden {
-    display: none;
-}
-
-.dishImage {
-    height: 39px;
-    width: 200px;
-    margin: 0 10px 5px 0;
-    border-radius: 6px;
-    box-shadow: 3px 3px 3px lightgrey;
-    object-fit: cover;
-    object-position: center;
-    cursor: pointer;
-}
-
-#menuTableBody td {
-    /*border: 0;*/
-}
-
-#menuTableBody td input {
-    margin: 0 10px 10px 0;
-    border: 0;
-    padding: 10px;
-    border-radius: 6px;
-    box-shadow: 3px 3px 3px lightgrey;
-    font-size: 16px;
-    color: #646363;
-}
-
-::placeholder {
-    color: lightgrey;
 }
 
 .toast {
     position: fixed;
     z-index: 1;
     bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
+    /*left: 50%;*/
+    /*transform: translateX(-50%);*/
     padding: 16px;
     border-radius: 10px;
-    box-shadow: rgba(100, 100, 111, 0.2) 0 7px 29px 0;
+    /*box-shadow: rgba(100, 100, 111, 0.2) 0 7px 29px 0;*/
     color: white;
     opacity: 0.8
+}
+
+/* COMMON ELEMENTS: end */
+
+/* QR CODE: begin */
+
+#qrCode {
+    cursor: pointer;
+}
+
+/* QR CODE: end */
+
+.dish-card input {
+    width: 100%;
+    margin-bottom: 5px;
+    padding: 4px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 5px;
 }
 
 #add-dish-button {
@@ -128,100 +93,332 @@ table {
     padding: 0;
 }
 
-#add-dish-button:hover {
+/* DISHES: end */
+
+/* ADMIN: begin */
+
+.menu-editor .dish-card .content {
+    padding: 5px 15px;
+}
+
+/* ADMIN: end */
+
+
+#categories {
+    margin: 20px;
+}
+
+#categories a {
+    margin-right: 10px;
+    margin-bottom: 10px;
+    background: black;
+    color: white;
+    text-decoration: none;
+    padding: 10px;
+    border-radius: 20px;
+    display: inline-block;
+    border: 1px solid black;
+}
+
+#categories a:hover {
+    background: white;
+    color: black;
+}
+
+#menu .category-label {
+    margin: 20px;
+    text-align: center;
+
+}
+
+#menu .dish-card {
+    display: flex;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin: 0 20px 20px 20px;
+    min-width: 335px;
+}
+
+#menu .dish-card-filler {
+    visibility: hidden;
+    margin-bottom: 0;
+}
+
+.dish-card img {
+    width: 33%;
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+    /*height: 150px;*/
+    object-fit: cover;
+    object-position: center;
+}
+
+.dish-card .content {
+    padding: 15px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 120px
+}
+
+.dish-card .content h3 {
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.dish-card .content p {
+    color: #666;
+}
+
+.dish-card .content .buttons {
+    text-align: center;
+}
+
+.dish-card .content .buttons button {
+    width: initial;
+    padding: initial;
+    background-color: inherit;
+    border: inherit;
+    margin-right: 5px;
+}
+
+@media (max-width: 768px) {
+    .dish-card {
+        margin: 0 10px 10px 10px;
+    }
+
+    .dish-card:first-child {
+        margin-top: 10px;
+    }
+}
+
+@media (min-width: 750px) {
+    .category-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(375px, 1fr));
+        gap: 20px;
+        padding-top: 20px;
+    }
+}
+
+footer {
+    background-color: #000;
+    color: #fff;
+    text-align: center;
+    padding: 5px;
+}
+
+footer .powered-by {
+    margin: 0 10px;
+}
+
+footer .powered-by a {
+    color: white;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+/*--- ADMIN ---*/
+
+
+body {
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    /*background-color: #f4f4f4;*/
+}
+
+#restaurantPage {
+    height: 100vh;
+    width: 100%;
+}
+
+#restaurantPage #info {
+    margin: 0 20px;
+    /*min-width: 300px;*/
+}
+
+#registerForm, #loginForm {
+    /*background-color: #fff;*/
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    /*width: 80%;*/
+    max-width: 400px;
+}
+
+/*#registerForm input, #loginForm input {*/
+/*    width: 100%;*/
+/*    margin-bottom: 15px;*/
+/*    padding: 10px;*/
+/*    box-sizing: border-box;*/
+/*    border: 1px solid #ccc;*/
+/*    border-radius: 5px;*/
+/*}*/
+
+/*button {*/
+/*    width: 100%;*/
+/*    padding: 10px;*/
+/*    background-color: black;*/
+/*    color: white;*/
+/*    border-radius: 5px;*/
+/*    cursor: pointer;*/
+/*    border: 1px solid black;*/
+/*}*/
+
+#registerForm button, #loginForm button {
+    width: 100%;
+    padding: 10px;
+    background-color: black;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    border: 1px solid black;
+}
+
+#registerForm button:hover, #loginForm button:hover {
     background-color: white;
     color: black;
 }
 
-#add-dish-button[disabled] {
-    background-color: grey;
-    cursor: not-allowed;
-    color: white;
+/*table {*/
+/*    !*width: 100%;*!*/
+/*    border-collapse: collapse;*/
+/*    !*background-color: white;*!*/
+/*}*/
+
+.hidden {
+    display: none;
 }
 
-.delete-button {
-    margin-right: 10px;
-    margin-bottom: 10px;
-}
+/*body, h1, button, p {*/
+/*    margin: 0;*/
+/*}*/
 
-.delete-button, .up-button, .down-button {
-    width: 50px;
-    margin-right: 0;
-    margin-bottom: 10px;
-    background-color: transparent;
-    border: none;
-    font-size: 28px;
-    padding: 0;
-}
+/*.dish-image {*/
+/*    height: 39px;*/
+/*    width: 200px;*/
+/*    margin: 0 10px 5px 0;*/
+/*    border-radius: 6px;*/
+/*    box-shadow: 3px 3px 3px lightgrey;*/
+/*    object-fit: cover;*/
+/*    object-position: center;*/
+/*    cursor: pointer;*/
+/*}*/
 
-.delete-button:hover, .up-button:hover, .down-button:hover {
-    /*background-color: grey;*/
-    transform: scale(1.5);
+/*#menuTableBody td {*/
+/*    !*border: 0;*!*/
+/*}*/
 
-}
+/*#menuTableBody td input {*/
+/*    margin: 0 10px 10px 0;*/
+/*    border: 0;*/
+/*    padding: 10px;*/
+/*    border-radius: 6px;*/
+/*    box-shadow: 3px 3px 3px lightgrey;*/
+/*    font-size: 16px;*/
+/*    color: #646363;*/
+/*}*/
 
-.delete-button[disabled], .up-button[disabled], .down-button[disabled] {
-    /*background-color: grey;*/
-    opacity: .5;
-    cursor: not-allowed;
-    transform: none !important;
+/*::placeholder {*/
+/*    color: lightgrey;*/
+/*}*/
 
 
-}
+/*#add-dish-button:hover {*/
+/*    background-color: white;*/
+/*    color: black;*/
+/*}*/
 
-#menuTableBody td:last-child {
-    display: flex;
-}
+/*#add-dish-button[disabled] {*/
+/*    background-color: grey;*/
+/*    cursor: not-allowed;*/
+/*    color: white;*/
+/*}*/
 
-.ib {
-    display: inline-block;
-    padding: 20px;
-}
+/*.delete-button {*/
+/*    margin-right: 10px;*/
+/*    margin-bottom: 10px;*/
+/*}*/
 
-.ib:first-child {
-    float: left;
-}
+/*.delete-button, .up-button, .down-button {*/
+/*    width: 50px;*/
+/*    margin-right: 0;*/
+/*    margin-bottom: 10px;*/
+/*    background-color: transparent;*/
+/*    border: none;*/
+/*    font-size: 28px;*/
+/*    padding: 0;*/
+/*}*/
 
-.ib:last-child {
-    float: right;
-}
+/*.delete-button:hover, .up-button:hover, .down-button:hover {*/
+/*    !*background-color: grey;*!*/
+/*    transform: scale(1.5);*/
 
-.ib h1 {
-    display: inline;
-}
+/*}*/
 
-#qrCode {
-    height: 30px;
-    cursor: pointer;
-}
+/*.delete-button[disabled], .up-button[disabled], .down-button[disabled] {*/
+/*    !*background-color: grey;*!*/
+/*    opacity: .5;*/
+/*    cursor: not-allowed;*/
+/*    transform: none !important;*/
 
-table {
-    width: 100%;
-    text-align: center;
-}
 
-@media screen and (max-width: 1199px) {
-    tr {
-        display: block;
-        padding: 10px 0;
-        margin: 30px 0;
-        box-shadow: 0 10px 10px lightgrey;
-    }
+/*}*/
 
-    td {
-        width: 47%;
-        display: inline-block !important;
-        padding: 0 10px;
-    }
+/*#menuTableBody td:last-child {*/
+/*    display: flex;*/
+/*}*/
 
-    td > * {
-        width: 90%;
-    }
-}
+/*.ib {*/
+/*    display: inline-block;*/
+/*    padding: 20px;*/
+/*}*/
 
-@media screen and (max-width: 600px) {
-    td {
-        width: 90%;
-    }
-}
+/*.ib:first-child {*/
+/*    float: left;*/
+/*}*/
+
+/*.ib:last-child {*/
+/*    float: right;*/
+/*}*/
+
+/*.ib h1 {*/
+/*    display: inline;*/
+/*}*/
+
+
+
+/*table {*/
+/*    width: 100%;*/
+/*    text-align: center;*/
+/*}*/
+
+/*@media screen and (max-width: 1199px) {*/
+/*    tr {*/
+/*        display: block;*/
+/*        padding: 10px 0;*/
+/*        margin: 30px 0;*/
+/*        box-shadow: 0 10px 10px lightgrey;*/
+/*    }*/
+
+/*    td {*/
+/*        width: 47%;*/
+/*        display: inline-block !important;*/
+/*        padding: 0 10px;*/
+/*    }*/
+
+/*    td > * {*/
+/*        width: 90%;*/
+/*    }*/
+/*}*/
+
+/*@media screen and (max-width: 600px) {*/
+/*    td {*/
+/*        width: 90%;*/
+/*    }*/
+/*}*/
 

@@ -27,17 +27,18 @@
 </form>
 
 <div id="restaurantPage" class="hidden">
-  <div>
-    <div class="ib"><h1 id="restaurantName"></h1></div>
-    <div class="ib"><img id="qrCode" src="" onclick="openQRCode()"></div>
-    <div class="ib">
-      <button onclick="confirmLogout()">Logout</button>
-    </div>
-  </div>
+  <div id="info">
+    <h1><span id="restaurantName"></span> (<a href="#" onclick="confirmLogout()">Logout</a>)</h1>
 
-  <table id="menuTable">
-    <tbody id="menuTableBody"></tbody>
-  </table>
+    <h2>Your QR code is ready to use! (Click on it and print it)</h2>
+    <img id="qrCode" src="" onclick="openQRCode()">
+
+    <h2>Your menu is ready and can be checked here:</h2>
+    <h3><a id="menuLink" href="" target="_blank"></a></h3>
+
+    <h2>Your can edit your menu below:</h2>
+  </div>
+  <div id="menu" class="menu-editor"></div>
   <button id="add-dish-button" onclick="addDish()">+</button>
 </div>
 
