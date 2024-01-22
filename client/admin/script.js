@@ -142,7 +142,7 @@ async function loadData() {
             userId = data.id;
             name = data.name;
             document.getElementById('restaurantName').innerHTML = `Welcome, ${data.name}`;
-            document.getElementById('menuLink').href =`${DOMAIN}/sites/${data.id}`;
+            document.getElementById('menuLink').href = `${DOMAIN}/sites/${data.id}`;
             document.getElementById('menuLink').text = `${DOMAIN}/sites/${data.id}`;
             document.getElementById('qrCode').src = `${DOMAIN}/sites/${data.id}/qr.png`;
             drawCards();
@@ -242,15 +242,25 @@ function drawCards() {
     const cardsContainer = document.getElementById('menu');
     cardsContainer.innerHTML = '';
     let categoryContainer, countInCategory;
+    if (!dishes.length) {
+        let dishCard = document.createElement('h4');
+        dishCard.className = 'dish-card';
+        dishCard.style.boxShadow = 'none';
+        dishCard.textContent = 'Add your first dish by clicking the button in the bottom right corner';
+        cardsContainer.appendChild(dishCard);
+        return;
+    }
     dishes.forEach((dish, index) => {
         // Category
-        if (!index || dishes[index - 1].category !== dish.category) {
-            // Category Label
-            let categoryLabel = document.createElement('h1');
-            categoryLabel.className = 'category-label';
-            categoryLabel.id = dish.category;
-            categoryLabel.textContent = dish.category;
-            cardsContainer.appendChild(categoryLabel);
+        if ((!index || dishes[index - 1].category !== dish.category)) {
+            if (dishes.length > 1) {
+                // Category Label
+                let categoryLabel = document.createElement('h1');
+                categoryLabel.className = 'category-label';
+                categoryLabel.id = dish.category;
+                categoryLabel.textContent = dish.category;
+                cardsContainer.appendChild(categoryLabel);
+            }
 
             countInCategory = 0;
             categoryContainer = document.createElement('div');
@@ -403,6 +413,11 @@ async function deleteDish(dishId) {
             }
         );
         if (response.ok) {
+            if (dishes.length === 1) {
+                dishes = [];
+                drawCards();
+                return;
+            }
             let dishIndex = dishes.findIndex(d => d.id === dishId);
             dishes = [...dishes.slice(0, dishIndex), ...dishes.slice(dishIndex + 1)];
             document.getElementById(`dish-card-${dishId}`).remove();

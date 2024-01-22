@@ -127,14 +127,14 @@ app.post('/register', async (req, res) => {
         }
         // const initData = new Array(10).fill(0).map((_, i) => ({name: 'Dish' + i, description: 'Description' + i, price: '10' + i, imgUrl: `${settings.DOMAIN}/imgs/dish_placeholder.png?q=${i}`}));
         let initData;
-        if (fs.existsSync('./exampleData.json')) {
-            initData = JSON.parse(fs.readFileSync('./exampleData.json', 'utf8')).map(dish => ({
-                ...dish,
-                imgUrl: dish.imgUrl.replace('${domain}', settings.DOMAIN)
-            }));
-        } else {
-            initData = [];
-        }
+        // if (fs.existsSync('./exampleData.json')) {
+        //     initData = JSON.parse(fs.readFileSync('./exampleData.json', 'utf8')).map(dish => ({
+        //         ...dish,
+        //         imgUrl: dish.imgUrl.replace('${domain}', settings.DOMAIN)
+        //     }));
+        // } else {
+        initData = [];
+        // }
         saveDataAndPage(id, initData);
         return res.status(200).json({id, name, token});
     } catch (error) {
@@ -220,7 +220,7 @@ function saveDataAndPage(id, data) {
     fs.writeFileSync(`${sitesDir}/${id}/data.json`, JSON.stringify(data));
     let menu = '';
     if (!data.length) {
-        menu = '<p>There are no dishes yet</p>';
+        menu = '<div style=\'text-align: center;\'><h3>There are no dishes yet</h3></div>';
     }
     // data.sort((a, b) => a.category.localeCompare(b.category));
     const categories = data.reduce((a, c) => a.includes(c.category) ? a : [...a, c.category], []);
@@ -269,7 +269,8 @@ app.post('/dishes/', (req, res) => {
     }
     try {
         let data = loadData(decoded.id);
-        const id = Math.max(...data.map(dish => dish.id)) + 1;
+        let dishes = data.map(dish => dish.id);
+        const id = dishes.length ? Math.max(...dishes) + 1 : 0;
         const order = Math.max(...data.map(dish => dish.order)) + 1
         const dish = {id, name: '', description: '', price: '', category: 'Other', order};
         data = [...data, dish];
