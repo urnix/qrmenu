@@ -1,4 +1,14 @@
 // TODO: fs sync -> async
+// TODO add timestamps and history of actions
+// Add categories
+// Repair sorting
+// Make description an textarea
+// ---
+// Improve layout of admin panel
+// ---
+// Add wifi/pass
+// Ability to change name
+// Send pass to email
 
 import express from "express";
 import jwt from "jsonwebtoken";
@@ -35,6 +45,10 @@ app.use((req, res, next) => {
     next();
 });
 
+function getExp() {
+    return Math.floor(Date.now() / 1000) + (7 * 60 * 60);
+}
+
 function recCopy(s, s2) {
     const stat = fs.statSync(s);
     if (stat.isDirectory()) {
@@ -67,7 +81,7 @@ function createDishCard(dish) {
 }
 
 function prolongToken(decoded) {
-    let payload = {...decoded, exp: Math.floor(Date.now() / 1000) + (60 * 60)};
+    let payload = {...decoded, exp: getExp()};
     return jwt.sign(payload, settings.KEY);
 }
 
@@ -102,7 +116,7 @@ app.post('/register', async (req, res) => {
         }
         const credentials = fs.readFileSync(credentialsPath, 'utf8').split('\n');
         const id = credentials.length ? credentials.length : 1;
-        let payload = {id, email, password, exp: Math.floor(Date.now() / 1000) + (60 * 60)};
+        let payload = {id, email, password, exp: getExp()};
         const token = jwt.sign(payload, settings.KEY);
         fs.appendFileSync(credentialsPath, `${id}\t${name}\t${email}\t${password}\n`);
         const credentials2 = fs.readFileSync(credentialsPath, 'utf8').split('\n');
@@ -133,7 +147,13 @@ app.post('/register', async (req, res) => {
         //         imgUrl: dish.imgUrl.replace('${domain}', settings.DOMAIN)
         //     }));
         // } else {
-        initData = [];
+        initData = {
+            categories: [
+                'Food',
+                'Drinks',
+            ],
+            dishes: []
+        };
         // }
         saveDataAndPage(id, initData);
         return res.status(200).json({id, name, token});
@@ -157,7 +177,7 @@ app.post('/login', async (req, res) => {
         if (!user) {
             return res.status(404).send('Email not registered');
         }
-        let payload = {id: user.id, email, password, exp: Math.floor(Date.now() / 1000) + (60 * 60)};
+        let payload = {id: user.id, email, password, exp: getExp()};
         const token = jwt.sign(payload, settings.KEY);
         if (user.password !== password) {
             return res.status(401).send('Wrong password');
@@ -186,7 +206,7 @@ app.get('/', (req, res) => {
             return res.status(401).send('User not found');
         }
         const data = loadData(decoded.id);
-        data.sort((a, b) => a.order - b.order);
+        data.dishes.sort((a, b) => a.order - b.order);
         return res.status(200).json({token: prolongToken(decoded), name: user.name, id: user.id, data});
     } catch (error) {
         console.error(error);
@@ -218,26 +238,26 @@ function saveDataAndPage(id, data) {
         throw new Error('User not found');
     }
     fs.writeFileSync(`${sitesDir}/${id}/data.json`, JSON.stringify(data));
+    let categories = data.categories;
+    let dishes = data.dishes;
     let menu = '';
-    if (!data.length) {
+    if (!dishes.length) {
         menu = '<div style=\'text-align: center;\'><h3>There are no dishes yet</h3></div>';
     }
-    // data.sort((a, b) => a.category.localeCompare(b.category));
-    const categories = data.reduce((a, c) => a.includes(c.category) ? a : [...a, c.category], []);
     let categoriesHtml = '';
     for (const category of categories) {
         categoriesHtml += `<a href="#${category.toLowerCase()}">${category}</a>`
     }
-    data = categories.reduce((a, c) => [...a, ...(data.filter(dish => dish.category === c))], [])
-    for (let i = 0; i < data.length; i++) {
-        if (i > 0 && data[i].category !== data[i - 1].category) {
+    dishes = categories.reduce((a, c) => [...a, ...(dishes.filter(dish => dish.category === c))], [])
+    for (let i = 0; i < dishes.length; i++) {
+        if (i > 0 && dishes[i].category !== dishes[i - 1].category) {
             menu += '<div class="dish-card dish-card-filler"></div><div class="dish-card dish-card-filler"></div><div class="dish-card dish-card-filler"></div>';
             menu += '</div>';
         }
-        if (i === 0 || data[i].category !== data[i - 1].category) {
-            menu += `<h1 class="category-label" id="${data[i].category.toLowerCase()}">${data[i].category}</h1><div class="category-container">`;
+        if (i === 0 || dishes[i].category !== dishes[i - 1].category) {
+            menu += `<h1 class="category-label" id="${dishes[i].category.toLowerCase()}">${dishes[i].category}</h1><div class="category-container">`;
         }
-        menu += createDishCard(data[i]);
+        menu += createDishCard(dishes[i]);
     }
     menu += '<div class="dish-card dish-card-filler"></div><div class="dish-card dish-card-filler"></div><div class="dish-card dish-card-filler"></div>';
     menu += '</div>';
@@ -259,6 +279,53 @@ function saveDataAndPage(id, data) {
     }
 }
 
+app.post('/categories/', (req, res) => {
+    let decoded;
+    try {
+        const {token} = req.query;
+        decoded = jwt.verify(token, settings.KEY);
+    } catch (error) {
+        return res.status(401).send('Session expired');
+    }
+    try {
+        let data = loadData(decoded.id);
+        let categories = data.categories;
+        categories = [...categories, ''];
+        data = {...data, categories};
+        saveDataAndPage(decoded.id, data);
+        return res.status(200).json({token: prolongToken(decoded)});
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send('Server error');
+    }
+});
+
+app.put('/categories/:index', (req, res) => {
+    let decoded;
+    try {
+        const {token} = req.query;
+        decoded = jwt.verify(token, settings.KEY);
+    } catch (error) {
+        return res.status(401).send('Session expired');
+    }
+    try {
+        const index = parseInt(req.params.index);
+        console.log(`index: ${JSON.stringify(index)}`);
+        let data = loadData(decoded.id);
+        let categories = data.categories;
+        if (index < 0 || index >= categories.length) {
+            return res.status(404).send('Category not found');
+        }
+        categories = [...categories.slice(0, index), req.body.value, ...categories.slice(index + 1)];
+        data = {...data, categories};
+        saveDataAndPage(decoded.id, data);
+        return res.status(200).json({token: prolongToken(decoded)});
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send('Server error');
+    }
+});
+
 app.post('/dishes/', (req, res) => {
     let decoded;
     try {
@@ -269,7 +336,7 @@ app.post('/dishes/', (req, res) => {
     }
     try {
         let data = loadData(decoded.id);
-        let dishes = data.map(dish => dish.id);
+        let dishes = data.dishes.map(dish => dish.id);
         const id = dishes.length ? Math.max(...dishes) + 1 : 0;
         const order = Math.max(...data.map(dish => dish.order)) + 1
         const dish = {id, name: '', description: '', price: '', category: 'Other', order};

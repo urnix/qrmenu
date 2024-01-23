@@ -5,6 +5,7 @@ const DOMAIN = isLocal ? 'file:///Users/fen1x/dev/my/menu/client' : 'https://men
 let userId = '';
 let name_ = '';
 let dishes = [];
+let categories = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (localStorage.getItem('token')) {
@@ -137,7 +138,8 @@ async function loadData() {
         const response = await fetch(`${API}/?token=${encodeURIComponent(token)}`);
         if (response.ok) {
             const data = await response.json();
-            dishes = data.data;
+            dishes = data.data.dishes;
+            categories = data.data.categories
             dishes.sort((a, b) => a.category.localeCompare(b.category) || a.order - b.order);
             userId = data.id;
             name = data.name;
@@ -145,6 +147,7 @@ async function loadData() {
             document.getElementById('menuLink').href = `${DOMAIN}/sites/${data.id}`;
             document.getElementById('menuLink').text = `${DOMAIN}/sites/${data.id}`;
             document.getElementById('qrCode').src = `${DOMAIN}/sites/${data.id}/qr.png`;
+            drawCategories();
             drawCards();
             showEditor();
         } else if (response.status === 401) {
@@ -160,20 +163,45 @@ async function loadData() {
     }
 }
 
-function drawTextField(card, dishId, fieldName, placeholder, value) {
-    if (['name', 'description', 'category', 'price'].includes(fieldName)) {
-        let input;
-        if (['name'].includes(fieldName)) {
-            input = document.createElement('input');
-        } else {
-            input = document.createElement('input');
-        }
-        input.type = 'text';
-        input.placeholder = placeholder;
-        input.value = value;
-        input.addEventListener('change', async () => await updateDish(dishId, fieldName, input.value));
-        card.appendChild(input);
+function drawCategories() {
+    const cardsContainer = document.getElementById('categories');
+    cardsContainer.innerHTML = '';
+    if (!categories.length) {
+        let dishCard = document.createElement('h4');
+        dishCard.className = 'dish-card';
+        dishCard.style.boxShadow = 'none';
+        dishCard.textContent = 'Add your first category by clicking the button';
+        cardsContainer.appendChild(dishCard);
+        return;
     }
+    categories.forEach((category, index) => {
+        // Card
+        let cardDiv = document.createElement('div');
+        cardDiv.id = `category-card-${index}`;
+        cardDiv.className = `category-card`;
+
+        // Image
+
+        // Content
+        let contentDiv = document.createElement('div');
+        contentDiv.className = 'content';
+        drawCategoryTextField(contentDiv, index, category);
+        // drawButtonsField(contentDiv, dish.id, dish.order, index);
+        cardDiv.appendChild(contentDiv);
+
+        // Card
+        cardsContainer.appendChild(cardDiv);
+    });
+}
+
+function drawCategoryTextField(card, index, category) {
+    let input;
+    input = document.createElement('input');
+    input.type = 'text';
+    // input.placeholder = placeholder;
+    input.value = category;
+    input.addEventListener('change', async () => await updateCategory(index, input.value));
+    card.appendChild(input);
 }
 
 function drawImageField(card, dishId, fieldName, placeholder, value) {
@@ -246,7 +274,7 @@ function drawCards() {
         let dishCard = document.createElement('h4');
         dishCard.className = 'dish-card';
         dishCard.style.boxShadow = 'none';
-        dishCard.textContent = 'Add your first dish by clicking the button in the bottom right corner';
+        dishCard.textContent = 'Add your first dish by clicking the button';
         cardsContainer.appendChild(dishCard);
         return;
     }
@@ -342,6 +370,58 @@ function capitalize(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
+async function addCategory() {
+    let addButton = document.getElementById('add-category-button');
+    try {
+        addButton.disabled = true;
+        const response = await fetch(`${API}/categories/?token=${encodeURIComponent(localStorage.getItem('token'))}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+            }
+        );
+        if (response.ok) {
+            categories.push('');
+            drawCategories();
+            // await loadData();
+            // setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 1);
+        } else if (response.status === 401) {
+            toastFail('Session expired');
+            this.logout()
+        } else {
+            toastFail('Failed to add category');
+        }
+    } catch (error) {
+        console.error(error);
+        toastFail('Error adding category');
+    } finally {
+        addButton.disabled = false;
+    }
+}
+
+async function updateCategory(index, category) {
+    try {
+        const response = await fetch(`${API}/categories/${index}/?token=${encodeURIComponent(localStorage.getItem('token'))}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({value: ''+category})
+            }
+        );
+        if (response.ok) {
+            await loadData();
+        } else if (response.status === 401) {
+            toastFail('Session expired');
+            this.logout()
+        } else {
+            toastFail(`Failed to update ${capitalize(category)}`);
+        }
+    } catch (error) {
+        toastFail(`Error updating ${capitalize(category)}`);
+    } finally {
+        document.querySelectorAll('.up-button').forEach((b, i) => b.disabled = i === 0);
+        document.querySelectorAll('.down-button').forEach((b, i, p) => b.disabled = i === p.length - 1);
+    }
+}
+
 async function addDish() {
     let addButton = document.getElementById('add-dish-button');
     try {
@@ -396,7 +476,6 @@ async function updateDish(dishId, fieldName, value) {
     } finally {
         document.querySelectorAll('.up-button').forEach((b, i) => b.disabled = i === 0);
         document.querySelectorAll('.down-button').forEach((b, i, p) => b.disabled = i === p.length - 1);
-
     }
 }
 

@@ -75,7 +75,7 @@ button:hover {
     border-radius: 5px;
 }
 
-#add-dish-button {
+.circle-button {
     border-radius: 50%;
     width: 66px;
     height: 66px;
@@ -91,6 +91,16 @@ button:hover {
     cursor: pointer;
     box-shadow: 5px 5px 5px gray;
     padding: 0;
+}
+
+#add-dish-button {
+    bottom: 50px;
+    width: inherit;
+}
+
+#add-category-button {
+    bottom: 150px;
+    width: inherit;
 }
 
 /* DISHES: end */
