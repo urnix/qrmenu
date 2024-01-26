@@ -185,8 +185,14 @@ function drawCategories() {
         // Content
         let contentDiv = document.createElement('div');
         contentDiv.className = 'content';
-        drawCategoryTextField(contentDiv, index, category);
-        // drawButtonsField(contentDiv, dish.id, dish.order, index);
+
+        // add content child div
+        let contentChildDiv = document.createElement('div');
+        contentChildDiv.className = 'content-child';
+        contentDiv.appendChild(contentChildDiv);
+
+        drawCategoryTextField(contentChildDiv, index, category);
+        drawCategoryButtonsField(contentDiv, index, category);
         cardDiv.appendChild(contentDiv);
 
         // Card
@@ -200,8 +206,80 @@ function drawCategoryTextField(card, index, category) {
     input.type = 'text';
     // input.placeholder = placeholder;
     input.value = category;
-    input.addEventListener('change', async () => await updateCategory(index, input.value));
+    input.addEventListener('change', async () => {
+        categories[index] = input.value;
+        return await updateCategories();
+    });
     card.appendChild(input);
+}
+
+function drawCategoryButtonsField(card, index, category) {
+    const buttonsDiv = document.createElement('div');
+    buttonsDiv.className = 'buttons';
+
+    const deleteButton = document.createElement('button');
+    deleteButton.id = `delete-button-category-${index}`;
+    deleteButton.className = 'delete-deleteButton-category';
+    deleteButton.textContent = '🗑️';
+    deleteButton.disabled = dishes.some(d => d.category === category);
+    deleteButton.addEventListener('click', async () =>  {
+        if (!isLocal && !confirm('Are you sure you want to delete category?')) {
+            return;
+        }
+        categories.splice(index, 1);
+        await updateCategories();
+    });
+    buttonsDiv.appendChild(deleteButton);
+
+    // const upButton = document.createElement('button');
+    // upButton.id = `up-button-${dishId}`;
+    // upButton.className = 'up-deleteButton';
+    // upButton.textContent = '⬆️';
+    // if (index === 0) {
+    //     upButton.disabled = true;
+    // }
+    // upButton.addEventListener('click', async () => {
+    //     document.querySelectorAll('.up-deleteButton').forEach(b => b.disabled = true);
+    //     document.querySelectorAll('.down-deleteButton').forEach(b => b.disabled = true);
+    //     await updateDish(dishId, 'order', order - 1);
+    // });
+    // // buttonsDiv.appendChild(upButton);
+    //
+    // const downButton = document.createElement('button');
+    // downButton.id = `down-button-${dishId}`;
+    // downButton.className = 'down-deleteButton';
+    // downButton.textContent = '⬇️';
+    // if (index === dishes.length - 1) {
+    //     downButton.disabled = true;
+    // }
+    // downButton.addEventListener('click', async () => {
+    //     document.querySelectorAll('.up-deleteButton').forEach(b => b.disabled = true);
+    //     document.querySelectorAll('.down-deleteButton').forEach(b => b.disabled = true);
+    //     await updateDish(dishId, 'order', order + 1);
+    // });
+    // // buttonsDiv.appendChild(downButton);
+    card.appendChild(buttonsDiv);
+}
+
+async function addCategory() {
+    categories.push('New Category');
+    await updateCategories();
+}
+
+function drawTextField(card, dishId, fieldName, placeholder, value) {
+    if (['name', 'description', 'category', 'price'].includes(fieldName)) {
+        let input;
+        if (['name'].includes(fieldName)) {
+            input = document.createElement('input');
+        } else {
+            input = document.createElement('input');
+        }
+        input.type = 'text';
+        input.placeholder = placeholder;
+        input.value = value;
+        input.addEventListener('change', async () => await updateDish(dishId, fieldName, input.value));
+        card.appendChild(input);
+    }
 }
 
 function drawImageField(card, dishId, fieldName, placeholder, value) {
@@ -370,17 +448,17 @@ function capitalize(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
-async function addCategory() {
+async function updateCategories() {
     let addButton = document.getElementById('add-category-button');
     try {
         addButton.disabled = true;
         const response = await fetch(`${API}/categories/?token=${encodeURIComponent(localStorage.getItem('token'))}`, {
-                method: 'POST',
+                method: 'PUT',
                 headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({value: JSON.stringify(categories)})
             }
         );
         if (response.ok) {
-            categories.push('');
             drawCategories();
             // await loadData();
             // setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 1);
@@ -395,30 +473,6 @@ async function addCategory() {
         toastFail('Error adding category');
     } finally {
         addButton.disabled = false;
-    }
-}
-
-async function updateCategory(index, category) {
-    try {
-        const response = await fetch(`${API}/categories/${index}/?token=${encodeURIComponent(localStorage.getItem('token'))}`, {
-                method: 'PUT',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({value: ''+category})
-            }
-        );
-        if (response.ok) {
-            await loadData();
-        } else if (response.status === 401) {
-            toastFail('Session expired');
-            this.logout()
-        } else {
-            toastFail(`Failed to update ${capitalize(category)}`);
-        }
-    } catch (error) {
-        toastFail(`Error updating ${capitalize(category)}`);
-    } finally {
-        document.querySelectorAll('.up-button').forEach((b, i) => b.disabled = i === 0);
-        document.querySelectorAll('.down-button').forEach((b, i, p) => b.disabled = i === p.length - 1);
     }
 }
 
@@ -513,7 +567,6 @@ async function deleteDish(dishId) {
         deleteButton.disabled = true;
     }
 }
-
 
 function openQRCode() {
     window.open(document.getElementById('qrCode').src, '_blank');

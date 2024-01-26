@@ -141,6 +141,23 @@ button:hover {
 
 }
 
+#categories .category-card .content .content-child {
+    width: 300px;
+    display: inline-block;
+}
+#categories .category-card .content .buttons {
+    display: inline-block;
+    padding: 8px
+}
+
+#categories .category-card .content .buttons button {
+    width: initial;
+    padding: initial;
+    background-color: inherit;
+    border: inherit;
+    margin-right: 5px;
+}
+
 #menu .dish-card {
     display: flex;
     border-radius: 10px;

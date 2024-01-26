@@ -279,7 +279,7 @@ function saveDataAndPage(id, data) {
     }
 }
 
-app.post('/categories/', (req, res) => {
+app.put('/categories/', (req, res) => {
     let decoded;
     try {
         const {token} = req.query;
@@ -289,8 +289,7 @@ app.post('/categories/', (req, res) => {
     }
     try {
         let data = loadData(decoded.id);
-        let categories = data.categories;
-        categories = [...categories, ''];
+        let categories = JSON.parse(req.body.value);
         data = {...data, categories};
         saveDataAndPage(decoded.id, data);
         return res.status(200).json({token: prolongToken(decoded)});
@@ -336,11 +335,11 @@ app.post('/dishes/', (req, res) => {
     }
     try {
         let data = loadData(decoded.id);
-        let dishes = data.dishes.map(dish => dish.id);
-        const id = dishes.length ? Math.max(...dishes) + 1 : 0;
-        const order = Math.max(...data.map(dish => dish.order)) + 1
-        const dish = {id, name: '', description: '', price: '', category: 'Other', order};
-        data = [...data, dish];
+        let dishes = data.dishes;
+        const id = dishes.length ? Math.max(...dishes.map(d => d.id)) + 1 : 0;
+        const order = dishes.length ? Math.max(...dishes.map(d => d.order)) + 1 : 0;
+        const dish = {id, order, name: '', description: '', price: '', category: 'Other'};
+        data = {...data, dishes: [...dishes, dish]};
         saveDataAndPage(decoded.id, data);
         return res.status(200).json({token: prolongToken(decoded), id});
     } catch (error) {
