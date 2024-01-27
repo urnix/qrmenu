@@ -222,7 +222,7 @@ function drawCategoryButtonsField(card, index, category) {
     deleteButton.className = 'delete-deleteButton-category';
     deleteButton.textContent = '🗑️';
     deleteButton.disabled = dishes.some(d => d.category === category);
-    deleteButton.addEventListener('click', async () =>  {
+    deleteButton.addEventListener('click', async () => {
         if (!isLocal && !confirm('Are you sure you want to delete category?')) {
             return;
         }
@@ -267,19 +267,35 @@ async function addCategory() {
 }
 
 function drawTextField(card, dishId, fieldName, placeholder, value) {
-    if (['name', 'description', 'category', 'price'].includes(fieldName)) {
-        let input;
-        if (['name'].includes(fieldName)) {
-            input = document.createElement('input');
-        } else {
-            input = document.createElement('input');
-        }
-        input.type = 'text';
-        input.placeholder = placeholder;
-        input.value = value;
-        input.addEventListener('change', async () => await updateDish(dishId, fieldName, input.value));
-        card.appendChild(input);
-    }
+    let input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = placeholder;
+    input.value = value;
+    input.addEventListener('change', async () => await updateDish(dishId, fieldName, input.value));
+    card.appendChild(input);
+}
+
+function drawSelectCategoryField(card, dishId, fieldName, placeholder, value) {
+    // let input = document.createElement('input');
+    // input.type = 'text';
+    // input.placeholder = placeholder;
+    // input.value = value;
+    // input.addEventListener('change', async () => await updateDish(dishId, fieldName, input.value));
+    // add select
+    let input = document.createElement('select');
+    input.id = `select-category-${dishId}`;
+    input.addEventListener('change', async () => await updateDish(dishId, fieldName, input.value));
+    // add options
+    categories.forEach((category, index) => {
+        let option = document.createElement('option');
+        option.value = category;
+        option.text = category;
+        input.appendChild(option);
+    });
+    // set selected
+    input.value = value;
+
+    card.appendChild(input);
 }
 
 function drawImageField(card, dishId, fieldName, placeholder, value) {
@@ -387,7 +403,7 @@ function drawCards() {
         contentDiv.className = 'content';
         drawTextField(contentDiv, dish.id, 'name', 'Dish Name', dish.name);
         drawTextField(contentDiv, dish.id, 'description', 'Description', dish.description);
-        drawTextField(contentDiv, dish.id, 'category', 'Category', dish.category);
+        drawSelectCategoryField(contentDiv, dish.id, 'category', 'Category', dish.category);
         drawTextField(contentDiv, dish.id, 'price', 'Price', dish.price);
         drawButtonsField(contentDiv, dish.id, dish.order, index);
         cardDiv.appendChild(contentDiv);
