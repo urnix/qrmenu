@@ -122,7 +122,7 @@ function confirmLogout() {
     if (!isLocal && !confirm('Are you sure you want to log out?')) {
         return;
     }
-    this.logout();
+    logout();
 }
 
 function logout() {
@@ -152,7 +152,7 @@ async function loadData() {
             showEditor();
         } else if (response.status === 401) {
             toastFail('Session expired');
-            this.logout()
+            logout()
         } else {
             console.error(response);
             toastFail('Failed to load menu data');
@@ -432,29 +432,34 @@ function changeField(dishId, fieldName, value) {
     dish = {...dish, [fieldName]: value};
     dishes = [...dishes.slice(0, dishIndex), dish, ...dishes.slice(dishIndex + 1)];
 }
-
 async function uploadImage(input, dishId) {
+    if (!input.files.length) {
+        toastFail('No file selected');
+        return;
+    }
     const formData = new FormData();
     formData.append('image', input.files[0]);
     changeField(dishId, 'imgUrl', '../imgs/loader.svg');
     redrawImageField(dishId, '../imgs/loader.svg');
     try {
         const response = await fetch(`${API}/upload/${userId}/${dishId}/?token=${encodeURIComponent(localStorage.getItem('token'))}`, {
-                method: 'POST',
-                body: formData
-            }
-        );
-        if (response.ok) {
-            // await new Promise(r => setTimeout(r, 3000)); // TODO
-            const data = await response.json();
-            changeField(dishId, 'imgUrl', data.imgUrl);
-            redrawImageField(dishId, data.imgUrl);
+            method: 'POST',
+            body: formData
+        });
+        if (!response.ok) {
+            toastFail('Failed to upload image');
+            return;
         } else if (response.status === 401) {
             toastFail('Session expired');
             this.logout()
-        } else {
-            toastFail('Failed to upload image');
         }
+        const data = await response.json();
+        if (!data.hasOwnProperty('imgUrl')) {
+            toastFail('Unexpected server response');
+            return;
+        }
+        changeField(dishId, 'imgUrl', data.imgUrl);
+        redrawImageField(dishId, data.imgUrl);
     } catch (error) {
         toastFail('Error uploading image');
     }
@@ -480,7 +485,7 @@ async function updateCategories() {
             // setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 1);
         } else if (response.status === 401) {
             toastFail('Session expired');
-            this.logout()
+            logout()
         } else {
             toastFail('Failed to add category');
         }
@@ -506,7 +511,7 @@ async function addDish() {
             setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 1);
         } else if (response.status === 401) {
             toastFail('Session expired');
-            this.logout()
+            logout()
         } else {
             toastFail('Failed to add dish');
         }
@@ -537,7 +542,7 @@ async function updateDish(dishId, fieldName, value) {
             }
         } else if (response.status === 401) {
             toastFail('Session expired');
-            this.logout()
+            logout()
         } else {
             toastFail(`Failed to update ${capitalize(fieldName)}`);
         }
@@ -572,7 +577,7 @@ async function deleteDish(dishId) {
             document.getElementById(`dish-card-${dishId}`).remove();
         } else if (response.status === 401) {
             toastFail('Session expired');
-            this.logout()
+            logout()
         } else {
             toastFail(`Failed to delete dish`);
         }
