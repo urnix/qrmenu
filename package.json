@@ -5,7 +5,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start:api": "cd api && node server.js",
-    "start:client": "cd client/admin && open index.html",
+    "start:client": "cd client && static -p 8000",
     "k6": "cd k6 && k6 run main.js"
   },
   "keywords": [],

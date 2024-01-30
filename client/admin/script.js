@@ -1,6 +1,6 @@
 const isLocal = window.location.href.includes('localhost') || window.location.href.includes('file:///');
 const API = isLocal ? 'http://localhost:3001' : 'https://api.menu.artme.dev';
-const DOMAIN = isLocal ? 'file:///Users/fen1x/dev/my/menu/client' : 'https://menu.artme.dev';
+const DOMAIN = isLocal ? 'http://localhost:8000' : 'https://menu.artme.dev';
 
 let userId = '';
 let name_ = '';
