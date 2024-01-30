@@ -7,96 +7,53 @@ let name_ = '';
 let dishes = [];
 let categories = [];
 
-document.addEventListener('DOMContentLoaded', async () => {
-    if (localStorage.getItem('token')) {
-        showLoader();
-        await loadData();
-    } else {
-        showLoginForm();
-    }
-});
-
-function showLoader() {
-    document.getElementById('loader').style.display = 'block';
-    document.getElementById('loginForm').style.display = 'none';
-    document.getElementById('registerForm').style.display = 'none';
-    document.getElementById('restaurantPage').style.display = 'none';
+function switchMode(elementClass) {
+    ['loader', 'login-form', 'register-form', 'restaurant-page'].forEach(className =>
+        document.getElementsByClassName(className)[0].style.display = className === elementClass ? 'block' : 'none');
 }
 
-function showRegisterForm() {
-    document.getElementById('loader').style.display = 'none';
-    document.getElementById('loginForm').style.display = 'none';
-    document.getElementById('registerForm').style.display = 'block';
-    document.getElementById('restaurantPage').style.display = 'none';
-}
-
-function showLoginForm() {
-    document.getElementById('loader').style.display = 'none';
-    document.getElementById('loginForm').style.display = 'block';
-    document.getElementById('registerForm').style.display = 'none';
-    document.getElementById('restaurantPage').style.display = 'none';
-}
-
-function showEditor() {
-    document.getElementById('loginForm').style.display = 'none';
-    document.getElementById('registerForm').style.display = 'none';
-    document.getElementById('loader').style.display = 'none';
-    document.getElementById('restaurantPage').style.display = 'block';
-}
-
-async function register(event) {
-    event.preventDefault();
-    event.stopPropagation();
-    event.stopImmediatePropagation();
-    event.cancelBubble = true;
-    event.returnValue = false;
-    showLoader();
-    const name = document.querySelector('#registerForm .input-name').value;
-    const email = document.querySelector('#registerForm .input-email').value;
-    const password = document.querySelector('#registerForm .input-password').value;
-    const passwordConfirm = document.querySelector('#registerForm .input-passwordConfirm').value;
-    if (!name || !email || !password || !passwordConfirm) {
-        toastFail('All fields are required');
-        return;
-    }
-    if (!/.+@.+\..+/.test(email)) {
-        toastFail('Invalid email');
-        return;
-    }
-    if (password !== passwordConfirm) {
-        toastFail('Passwords do not match');
-        return;
-    }
+async function register() {
     try {
+        switchMode('loader');
+        const name = document.querySelector('.register-form .input-name').value;
+        const email = document.querySelector('.register-form .input-email').value;
+        const password = document.querySelector('.register-form .input-password').value;
+        const passwordConfirm = document.querySelector('.register-form .input-password-confirm').value;
+        if (!name || !email || !password || !passwordConfirm) {
+            throw new Error('All fields are required');
+        }
+        if (!/.+@.+\..+/.test(email)) {
+            throw new Error('Invalid email');
+        }
+        if (password !== passwordConfirm) {
+            throw new Error('Passwords do not match');
+        }
         const response = await fetch(`${API}/register`, {
             method: 'POST', headers: {'Content-Type': 'application/json',},
             body: JSON.stringify({name, email, password})
         });
-        if (response.ok) {
-            const data = await response.json();
-            userId = data.id;
-            name_ = name;
-            localStorage.setItem('token', data.token);
-            await loadData();
-        } else {
-            toastFail(await response.text());
-            showRegisterForm();
+        if (!response.ok) {
+            throw new Error(await response.text());
         }
+        const data = await response.json();
+        if (!data || !data.id || !data.token) {
+            throw new Error('Invalid server response');
+        }
+        userId = data.id;
+        name_ = name;
+        localStorage.setItem('token', data.token);
+        await loadData();
     } catch (error) {
         console.error(error);
-        toastFail('Registration failed');
+        toastFail(error);
+        switchMode('register-form');
     }
 }
 
-async function login(event) {
-    event.preventDefault();
-    event.stopPropagation();
-    event.stopImmediatePropagation();
-    event.cancelBubble = true;
-    event.returnValue = false;
-    showLoader()
-    const email = document.querySelector('#loginForm .input-email').value;
-    const password = document.querySelector('#loginForm .input-password').value;
+async function login() {
+    switchMode('loader');
+    const email = document.querySelector('.login-form .input-email').value;
+    const password = document.querySelector('.login-form .input-password').value;
     try {
         const response = await fetch(`${API}/login`, {
             method: 'POST', headers: {'Content-Type': 'application/json',},
@@ -109,7 +66,7 @@ async function login(event) {
             localStorage.setItem('token', data.token);
             await loadData();
         } else {
-            showLoginForm();
+            switchMode('login-form');
             toastFail(await response.text());
         }
     } catch (error) {
@@ -149,7 +106,7 @@ async function loadData() {
             document.getElementById('qrCode').src = `${DOMAIN}/sites/${data.id}/qr.png`;
             drawCategories();
             drawCards();
-            showEditor();
+            switchMode('restaurant-page');
         } else if (response.status === 401) {
             toastFail('Session expired');
             logout()
@@ -286,7 +243,7 @@ function drawSelectCategoryField(card, dishId, fieldName, placeholder, value) {
     input.id = `select-category-${dishId}`;
     input.addEventListener('change', async () => await updateDish(dishId, fieldName, input.value));
     // add options
-    categories.forEach((category, index) => {
+    categories.forEach((category) => {
         let option = document.createElement('option');
         option.value = category;
         option.text = category;
@@ -432,6 +389,7 @@ function changeField(dishId, fieldName, value) {
     dish = {...dish, [fieldName]: value};
     dishes = [...dishes.slice(0, dishIndex), dish, ...dishes.slice(dishIndex + 1)];
 }
+
 async function uploadImage(input, dishId) {
     if (!input.files.length) {
         toastFail('No file selected');
@@ -622,3 +580,12 @@ function toastSuccess(message) {
 function toastFail(message) {
     new Toast(message, ToastType.Danger, 30000);
 }
+
+document.addEventListener('DOMContentLoaded', async () => {
+    if (localStorage.getItem('token')) {
+        switchMode('loader');
+        await loadData();
+    } else {
+        switchMode('login-form');
+    }
+});

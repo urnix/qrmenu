@@ -22,25 +22,25 @@
   </script>
 </head>
 <body>
-<img id="loader" class="hidden" src="../imgs/loader.svg" alt="Loading">
+<img class="loader hidden" src="../imgs/loader.svg" alt="Loading">
 
-<form id="registerForm" class="hidden" onSubmit="return register(event)">
-  <h2>Register or <a href="#" onclick="showLoginForm()">Login</a></h2>
+<form class="register-form hidden" onSubmit="return register()">
+  <h2>Register or <a href="#" onclick="switchMode('login-form')">Login</a></h2>
   <input type="text" class="input-name" placeholder="Cafe Name">
   <input type="email" class="input-email" placeholder="Email">
   <input type="password" class="input-password" placeholder="Password">
-  <input type="password" class="input-passwordConfirm" placeholder="Repeat Password">
+  <input type="password" class="input-password-confirm" placeholder="Confirm Password">
   <button type="submit">Register</button>
 </form>
 
-<form id="loginForm" class="hidden" onSubmit="return login(event)">
-  <h2>Login or <a href="#" onclick="showRegisterForm()">Register</a></h2>
+<form class="login-form hidden" onSubmit="return login()">
+  <h2>Login or <a href="#" onclick="switchMode('register-form')">Register</a></h2>
   <input type="email" class="input-email" placeholder="Email">
   <input type="password" class="input-password" placeholder="Password">
   <button type="submit">Login</button>
 </form>
 
-<div id="restaurantPage" class="hidden">
+<div class="restaurant-page hidden">
   <div id="info">
     <h1><span id="restaurantName"></span> (<a href="#" onclick="confirmLogout()">Logout</a>)</h1>
 

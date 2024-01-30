@@ -258,17 +258,17 @@ body {
     /*background-color: #f4f4f4;*/
 }
 
-#restaurantPage {
+.restaurant-page {
     height: 100vh;
     width: 100%;
 }
 
-#restaurantPage #info {
+.restaurant-page #info {
     margin: 0 20px;
     /*min-width: 300px;*/
 }
 
-#registerForm, #loginForm {
+#register-form, #login-form {
     /*background-color: #fff;*/
     padding: 20px;
     border-radius: 10px;
@@ -277,7 +277,7 @@ body {
     max-width: 400px;
 }
 
-/*#registerForm input, #loginForm input {*/
+/*#register-form, #login-form {*/
 /*    width: 100%;*/
 /*    margin-bottom: 15px;*/
 /*    padding: 10px;*/
@@ -296,7 +296,7 @@ body {
 /*    border: 1px solid black;*/
 /*}*/
 
-#registerForm button, #loginForm button {
+#register-form button, #login-form button {
     width: 100%;
     padding: 10px;
     background-color: black;
@@ -306,7 +306,7 @@ body {
     border: 1px solid black;
 }
 
-#registerForm button:hover, #loginForm button:hover {
+#register-form button:hover, #login-form button:hover {
     background-color: white;
     color: black;
 }
