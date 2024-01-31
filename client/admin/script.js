@@ -76,7 +76,7 @@ async function login() {
 }
 
 function confirmLogout() {
-    if (!isLocal && !confirm('Are you sure you want to log out?')) {
+    if (!confirm('Are you sure you want to log out?')) {
         return;
     }
     logout();
@@ -85,6 +85,8 @@ function confirmLogout() {
 function logout() {
     userId = '';
     name_ = '';
+    dishes = [];
+    categories = [];
     localStorage.removeItem('token');
     location.reload();
 }
@@ -93,30 +95,31 @@ async function loadData() {
     const token = localStorage.getItem('token');
     try {
         const response = await fetch(`${API}/?token=${encodeURIComponent(token)}`);
-        if (response.ok) {
-            const data = await response.json();
-            dishes = data.data.dishes;
-            categories = data.data.categories
-            dishes.sort((a, b) => a.category.localeCompare(b.category) || a.order - b.order);
-            userId = data.id;
-            name = data.name;
-            document.getElementById('restaurantName').innerHTML = `Welcome, ${data.name}`;
-            document.getElementById('menuLink').href = `${DOMAIN}/sites/${data.id}`;
-            document.getElementById('menuLink').text = `${DOMAIN}/sites/${data.id}`;
-            document.getElementById('qrCode').src = `${DOMAIN}/sites/${data.id}/qr.png`;
-            drawCategories();
-            drawCards();
-            switchMode('restaurant-page');
-        } else if (response.status === 401) {
+        if (response.status === 401) {
             toastFail('Session expired');
             logout()
-        } else {
-            console.error(response);
-            toastFail('Failed to load menu data');
         }
+        if (!response.ok) {
+            throw new Error('Failed to load menu data');
+        }
+        const data = await response.json();
+        if (!data || !data.id || !data.name || !data.data || !data.data.categories || !Array.isArray(data.data.categories) || !data.data.dishes || !Array.isArray(data.data.dishes)) {
+            throw new Error('Invalid server response');
+        }
+        userId = data.id;
+        document.getElementById('menuLink').href = `${DOMAIN}/sites/${userId}`;
+        document.getElementById('menuLink').text = `${DOMAIN}/sites/${userId}`;
+        document.getElementById('qrCode').src = `${DOMAIN}/sites/${userId}/qr.png`;
+        name_ = data.name;
+        document.getElementById('restaurantName').innerHTML = `Welcome, ${name_}`;
+        categories = data.data.categories
+        drawCategories();
+        dishes = data.data.dishes;
+        drawCards();
+        switchMode('restaurant-page');
     } catch (error) {
         console.error(error);
-        toastFail('Error loading menu data');
+        toastFail(error);
     }
 }
 
@@ -136,8 +139,6 @@ function drawCategories() {
         let cardDiv = document.createElement('div');
         cardDiv.id = `category-card-${index}`;
         cardDiv.className = `category-card`;
-
-        // Image
 
         // Content
         let contentDiv = document.createElement('div');
@@ -161,7 +162,6 @@ function drawCategoryTextField(card, index, category) {
     let input;
     input = document.createElement('input');
     input.type = 'text';
-    // input.placeholder = placeholder;
     input.value = category;
     input.addEventListener('change', async () => {
         categories[index] = input.value;
@@ -180,7 +180,7 @@ function drawCategoryButtonsField(card, index, category) {
     deleteButton.textContent = '🗑️';
     deleteButton.disabled = dishes.some(d => d.category === category);
     deleteButton.addEventListener('click', async () => {
-        if (!isLocal && !confirm('Are you sure you want to delete category?')) {
+        if (!confirm('Are you sure you want to delete category?')) {
             return;
         }
         categories.splice(index, 1);
@@ -429,6 +429,8 @@ function capitalize(string) {
 
 async function updateCategories() {
     let addButton = document.getElementById('add-category-button');
+    document.querySelectorAll('#categories input').forEach(i => i.disabled = true);
+    document.querySelectorAll('#categories button').forEach(b => b.disabled = true);
     try {
         addButton.disabled = true;
         const response = await fetch(`${API}/categories/?token=${encodeURIComponent(localStorage.getItem('token'))}`, {
@@ -437,19 +439,20 @@ async function updateCategories() {
                 body: JSON.stringify({value: JSON.stringify(categories)})
             }
         );
-        if (response.ok) {
-            drawCategories();
-            // await loadData();
-            // setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 1);
-        } else if (response.status === 401) {
+        // 401 error
+        if (response.status === 401) {
             toastFail('Session expired');
             logout()
-        } else {
-            toastFail('Failed to add category');
         }
+        if (!response.ok) {
+            throw new Error('Failed to update categories');
+        }
+            drawCategories();
+            await loadData();
+
     } catch (error) {
         console.error(error);
-        toastFail('Error adding category');
+        toastFail(error);
     } finally {
         addButton.disabled = false;
     }
@@ -513,7 +516,7 @@ async function updateDish(dishId, fieldName, value) {
 }
 
 async function deleteDish(dishId) {
-    if (!isLocal && !confirm('Are you sure you want to delete dish?')) {
+    if (!confirm('Are you sure you want to delete dish?')) {
         return;
     }
     let deleteButton = document.getElementById(`delete-button-${dishId}`);

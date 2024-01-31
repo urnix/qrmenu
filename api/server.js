@@ -14,10 +14,9 @@ import express from "express";
 import jwt from "jsonwebtoken";
 import fs from "fs";
 import QRCode from "qrcode";
-import path from "path";
+import path, {dirname} from "path";
 import multer from "multer";
 import {fileURLToPath} from 'url';
-import {dirname} from 'path';
 import gm from "gm";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -206,7 +205,7 @@ app.get('/', (req, res) => {
             return res.status(401).send('User not found');
         }
         const data = loadData(decoded.id);
-        data.dishes.sort((a, b) => a.order - b.order);
+        data.dishes.sort((a, b) => a.category.localeCompare(b.category) || a.order - b.order);
         return res.status(200).json({token: prolongToken(decoded), name: user.name, id: user.id, data});
     } catch (error) {
         console.error(error);
@@ -279,6 +278,7 @@ function saveDataAndPage(id, data) {
     }
 }
 
+// todo rename in all dishes
 app.put('/categories/', (req, res) => {
     let decoded;
     try {
@@ -359,20 +359,18 @@ app.put('/dishes/:id', (req, res) => {
     try {
         const dishId = parseInt(req.params.id);
         let data = loadData(decoded.id);
-        let dishIndex = data.findIndex(dish => dish.id === dishId);
-        let dish = data[dishIndex];
-        if (!dish) {
+        let index = data.dishes.findIndex(dish => dish.id === dishId);
+        if (index < 0) {
             return res.status(404).send('Dish not found');
         }
-        if (req.body.order !== undefined && req.body.order !== dish.order) {
-            let vi = data.findIndex(dish => dish.order === req.body.order);
-            let v = data[vi]
-            v.order = dish.order;
-            v = {...v, order: dish.order};
-            data = [...data.slice(0, vi), v, ...data.slice(vi + 1)];
-        }
-        dish = {...dish, ...req.body};
-        data = [...data.slice(0, dishIndex), dish, ...data.slice(dishIndex + 1)];
+        // if (req.body.order !== undefined && req.body.order !== dish.order) {
+        //     let vi = data.findIndex(dish => dish.order === req.body.order);
+        //     let v = data[vi]
+        //     v.order = dish.order;
+        //     v = {...v, order: dish.order};
+        //     data = [...data.slice(0, vi), v, ...data.slice(vi + 1)];
+        // }
+        data = {...data, dishes: data.dishes.map(d => d.id === dishId ? {...data.dishes[index], ...(req.body)} : d)};
         saveDataAndPage(decoded.id, data);
         return res.status(200).json({token: prolongToken(decoded)});
     } catch (error) {
