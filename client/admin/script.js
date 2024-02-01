@@ -115,7 +115,7 @@ async function loadData() {
         categories = data.data.categories
         drawCategories();
         dishes = data.data.dishes;
-        drawCards();
+        drawDishes();
         switchMode('restaurant-page');
     } catch (error) {
         console.error(error);
@@ -317,7 +317,7 @@ function drawButtonsField(card, dishId, order, index) {
     card.appendChild(buttonsDiv);
 }
 
-function drawCards() {
+function drawDishes() {
     const cardsContainer = document.getElementById('menu');
     cardsContainer.innerHTML = '';
     let categoryContainer, countInCategory;
@@ -530,7 +530,7 @@ async function deleteDish(dishId) {
         if (response.ok) {
             if (dishes.length === 1) {
                 dishes = [];
-                drawCards();
+                drawDishes();
                 return;
             }
             let dishIndex = dishes.findIndex(d => d.id === dishId);

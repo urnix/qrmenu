@@ -148,6 +148,7 @@ app.post('/register', async (req, res) => {
         // } else {
         initData = {
             categories: [
+                'No category',
                 'Food',
                 'Drinks',
             ],
@@ -205,7 +206,11 @@ app.get('/', (req, res) => {
             return res.status(401).send('User not found');
         }
         const data = loadData(decoded.id);
-        data.dishes.sort((a, b) => a.category.localeCompare(b.category) || a.order - b.order);
+        // sort by category order first, then by dish order
+        data.dishes.sort((a, b) =>
+            a.category === b.category
+                ? a.order - b.order
+                : data.categories.indexOf(a.category) - data.categories.indexOf(b.category));
         return res.status(200).json({token: prolongToken(decoded), name: user.name, id: user.id, data});
     } catch (error) {
         console.error(error);
@@ -338,7 +343,7 @@ app.post('/dishes/', (req, res) => {
         let dishes = data.dishes;
         const id = dishes.length ? Math.max(...dishes.map(d => d.id)) + 1 : 0;
         const order = dishes.length ? Math.max(...dishes.map(d => d.order)) + 1 : 0;
-        const dish = {id, order, name: '', description: '', price: '', category: 'Other'};
+        const dish = {id, order, name: '', description: '', price: '', category: 'No category'};
         data = {...data, dishes: [...dishes, dish]};
         saveDataAndPage(decoded.id, data);
         return res.status(200).json({token: prolongToken(decoded), id});
