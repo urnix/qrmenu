@@ -142,7 +142,7 @@ button:hover {
 }
 
 #categories .category-card .content .content-child {
-    width: 300px;
+    /*width: 300px;*/
     display: inline-block;
 }
 #categories .category-card .content .buttons {
