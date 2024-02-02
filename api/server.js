@@ -250,7 +250,7 @@ function saveDataAndPage(id, data) {
     }
     let categoriesHtml = '';
     for (const category of categories) {
-        categoriesHtml += `<a href="#${category.toLowerCase()}">${category}</a>`
+        categoriesHtml += `<a href="#${category.toLowerCase().replace(' ', '_')}">${category}</a>`
     }
     dishes = categories.reduce((a, c) => [...a, ...(dishes.filter(dish => dish.category === c))], [])
     for (let i = 0; i < dishes.length; i++) {
