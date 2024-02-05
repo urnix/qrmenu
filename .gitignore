@@ -11,7 +11,8 @@ api/node_modules/
 api/settings.*.json
 
 # Artifacts
-api/data/credentials.txt
-api/data/sites/*
+api/data/
+api/data_prod/
+api/data_prod*
 client/sites/*
 /backup/

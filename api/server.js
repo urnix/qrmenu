@@ -499,13 +499,15 @@ app.post('/upload/:userId/:dishId', upload.single('image'), async function (req,
         const imgUrl = `${settings.DOMAIN}/${clientSitesPrefix}/${req.params.userId}/imgs/${coPath}`;
         let data = loadData(decoded.id);
         let dishId = parseInt(req.params.dishId);
-        let dishIndex = data.findIndex(dish => dish.id === dishId);
-        let dish = data[dishIndex];
+        let dishes = data.dishes;
+        let dishIndex = dishes.findIndex(dish => dish.id === dishId);
+        let dish = dishes[dishIndex];
         if (!dish) {
             return res.status(404).send('Dish not found');
         }
         dish = {...dish, imgUrl};
-        data = [...data.slice(0, dishIndex), dish, ...data.slice(dishIndex + 1)];
+        dishes = [...dishes.slice(0, dishIndex), dish, ...dishes.slice(dishIndex + 1)];
+        data = {...data, dishes};
         saveDataAndPage(decoded.id, data);
         return res.status(200).json({token: prolongToken(decoded), imgUrl});
     } catch (error) {
