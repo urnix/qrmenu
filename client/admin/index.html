@@ -8,11 +8,13 @@
   <link rel="icon" href="../imgs/favicon.ico">
   <script type="text/javascript">
       if (!window.location.href.includes('localhost') && !window.location.href.includes('file:///')) {
+          // noinspection SpellCheckingInspection
           (function (c, l, a, r, i, t, y) {
               c[a] = c[a] || function () {
                   (c[a].q = c[a].q || []).push(arguments)
               };
               t = l.createElement(r);
+              // noinspection JSValidateTypes
               t.async = 1;
               t.src = "https://www.clarity.ms/tag/" + i;
               y = l.getElementsByTagName(r)[0];
@@ -24,7 +26,8 @@
 <body>
 <img class="loader hidden" src="../imgs/loader.svg" alt="Loading">
 
-<form class="register-form hidden" onSubmit="return register()">
+<!--suppress JSDeprecatedSymbols -->
+<form class="register-form hidden" onSubmit="return register(event)">
   <h2>Register or <a href="#" onclick="switchMode('login-form')">Login</a></h2>
   <input type="text" class="input-name" placeholder="Cafe Name">
   <input type="email" class="input-email" placeholder="Email">
@@ -33,7 +36,8 @@
   <button type="submit">Register</button>
 </form>
 
-<form class="login-form hidden" onSubmit="return login()">
+<!--suppress JSDeprecatedSymbols -->
+<form class="login-form hidden" onSubmit="return login(event)">
   <h2>Login or <a href="#" onclick="switchMode('register-form')">Register</a></h2>
   <input type="email" class="input-email" placeholder="Email">
   <input type="password" class="input-password" placeholder="Password">

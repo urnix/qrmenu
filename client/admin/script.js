@@ -12,8 +12,12 @@ function switchMode(elementClass) {
         document.getElementsByClassName(className)[0].style.display = className === elementClass ? 'block' : 'none');
 }
 
-async function register() {
+async function register(e) {
     try {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
         switchMode('loader');
         const name = document.querySelector('.register-form .input-name').value;
         const email = document.querySelector('.register-form .input-email').value;
@@ -50,11 +54,15 @@ async function register() {
     }
 }
 
-async function login() {
-    switchMode('loader');
-    const email = document.querySelector('.login-form .input-email').value;
-    const password = document.querySelector('.login-form .input-password').value;
+async function login(e) {
     try {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
+        switchMode('loader');
+        const email = document.querySelector('.login-form .input-email').value;
+        const password = document.querySelector('.login-form .input-password').value;
         const response = await fetch(`${API}/login`, {
             method: 'POST', headers: {'Content-Type': 'application/json',},
             body: JSON.stringify({email, password})
@@ -447,8 +455,8 @@ async function updateCategories() {
         if (!response.ok) {
             throw new Error('Failed to update categories');
         }
-            drawCategories();
-            await loadData();
+        drawCategories();
+        await loadData();
 
     } catch (error) {
         console.error(error);

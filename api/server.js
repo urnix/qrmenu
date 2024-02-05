@@ -114,7 +114,7 @@ app.post('/register', async (req, res) => {
             return res.status(409).send('Email already registered');
         }
         const credentials = fs.readFileSync(credentialsPath, 'utf8').split('\n');
-        const id = credentials.length ? credentials.length : 1;
+            const id = credentials.length ? credentials.length : 1;
         let payload = {id, email, password, exp: getExp()};
         const token = jwt.sign(payload, settings.KEY);
         fs.appendFileSync(credentialsPath, `${id}\t${name}\t${email}\t${password}\n`);
