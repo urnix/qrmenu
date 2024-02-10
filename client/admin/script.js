@@ -325,6 +325,17 @@ function drawButtonsField(card, dishId, order, index) {
     card.appendChild(buttonsDiv);
 }
 
+function drawCheckboxField(card, dishId, value, index) {
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = value;
+    checkbox.addEventListener('change', async () => {
+        dishes[index].on = checkbox.checked;
+        await updateDish(dishId, 'on', checkbox.checked);
+    });
+    card.appendChild(checkbox);
+}
+
 function drawDishes() {
     const cardsContainer = document.getElementById('menu');
     cardsContainer.innerHTML = '';
@@ -371,6 +382,7 @@ function drawDishes() {
         drawSelectCategoryField(contentDiv, dish.id, 'category', 'Category', dish.category);
         drawTextField(contentDiv, dish.id, 'price', 'Price', dish.price);
         drawButtonsField(contentDiv, dish.id, dish.order, index);
+        drawCheckboxField(contentDiv, dish.id, dish.on, index);
         cardDiv.appendChild(contentDiv);
 
         // Card
