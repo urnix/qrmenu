@@ -12,7 +12,7 @@ api/settings.*.json
 
 # Artifacts
 api/data/
-api/data_prod/
 api/data_prod*
 client/sites/*
 /backup/
+/api/backup/

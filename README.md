@@ -11,4 +11,4 @@ cd api && pnpm i
 
 # Restore data to production
 
-```rsync -avz -e "ssh -i /Users/fen1x/.ssh/aws-ec2-kaypair1.pem" /Users/fen1x/dev/my/menu/api/data_prod/ ubuntu@artme.dev:/home/ubuntu/src/menu/data/```
+```rsync -avz -e --exclude={'api/backup/'} "ssh -i /Users/fen1x/.ssh/aws-ec2-kaypair1.pem" /Users/fen1x/dev/my/menu/api/data_prod/ ubuntu@artme.dev:/home/ubuntu/src/menu/data/```
