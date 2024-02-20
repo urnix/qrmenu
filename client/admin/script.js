@@ -382,7 +382,7 @@ function drawDishes() {
         drawSelectCategoryField(contentDiv, dish.id, 'category', 'Category', dish.category);
         drawTextField(contentDiv, dish.id, 'price', 'Price', dish.price);
         drawButtonsField(contentDiv, dish.id, dish.order, index);
-        drawCheckboxField(contentDiv, dish.id, dish.on, index);
+        // drawCheckboxField(contentDiv, dish.id, dish.on, index);
         cardDiv.appendChild(contentDiv);
 
         // Card
